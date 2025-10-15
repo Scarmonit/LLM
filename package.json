@@ -35,6 +35,7 @@
     "optimize:memory-manager": "node -e \"import('./src/optimization/intelligent-memory-manager.js').then(m => new m.IntelligentMemoryManager().start())\"",
     "optimize:performance": "node -e \"import('./src/optimization/enhanced-performance-optimizer.js').then(m => new m.EnhancedPerformanceOptimizer().start())\"",
     "optimize:orchestrator": "node -e \"import('./src/optimization/optimization-orchestrator.js').then(m => new m.default().start())\"",
+    "optimize:codestral": "node scripts/codestral-autonomous-optimizer.js",
 
     "ultra:optimize": "node scripts/ultra-optimization-nexus.js",
     "ultra:memory": "npm run optimize:memory-manager",
