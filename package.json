@@ -2,10 +2,13 @@
   "name": "llm",
   "version": "2.1.0-ultra-optimized",
   "description": "LLM integration project with Ultra-Advanced Optimization Systems - BREAKTHROUGH PERFORMANCE + AI-DRIVEN OPTIMIZATION",
-  "main": "server-optimized.js",
+  "main": "server-enhanced.js",
   "type": "module",
   "scripts": {
-    "start": "npm run optimize:ultra && npm run build:tools && node server-optimized.js",
+    "start": "node server-enhanced.js",
+    "health:check": "curl -s http://localhost:8080/health | jq .",
+    "deploy:verify": "node deploy-and-verify.js",
+    "traefik:up": "docker compose -f docker-compose.traefik.yml up -d",
     "start:optimized": "node server-optimized.js",
     "start:enhanced": "npm run optimize:concurrent && node server-enhanced.js",
     "start:nitric": "cd src/nitric && npm install && nitric start",
@@ -20,7 +23,6 @@
     "start:production": "npm run ultra:optimize && node --expose-gc server-optimized.js",
     "start:ultra": "npm run concurrent:breakthrough && node --expose-gc --max-old-space-size=8192 server-optimized.js",
     "start:autonomous": "npm run optimize:autonomous && node --expose-gc --experimental-loader ./src/optimization/loader.js server-optimized.js",
-    
     "optimize": "node scripts/optimize-project.js",
     "optimize:autonomous": "node scripts/autonomous-performance-optimizer.js",
     "optimize:concurrent": "npm run concurrent:optimize",
@@ -37,24 +39,20 @@
     "optimize:orchestrator": "node -e \"import('./src/optimization/optimization-orchestrator.js').then(m => new m.default().start())\"",
     "optimize:codestral": "node scripts/codestral-autonomous-optimizer.js",
     "optimize:full-ai": "npm run optimize:codestral && npm run ultra:optimize && npm run breakthrough:optimize",
-
     "ultra:optimize": "node scripts/ultra-optimization-nexus.js",
     "ultra:memory": "npm run optimize:memory-manager",
     "ultra:performance": "npm run optimize:performance",
     "ultra:realtime": "npm run optimize:realtime",
     "ultra:full": "npm run ultra:optimize && npm run ultra:memory && npm run ultra:performance && npm run ultra:realtime",
-
     "breakthrough:optimize": "node scripts/breakthrough-system-optimizer.js",
     "breakthrough:memory": "node --expose-gc --max-old-space-size=8192 -e \"import('./src/optimization/intelligent-memory-manager.js').then(m => new m.IntelligentMemoryManager({enableAggressiveOptimization:true}).start())\"",
     "breakthrough:performance": "node --expose-gc -e \"import('./src/optimization/enhanced-performance-optimizer.js').then(m => new m.EnhancedPerformanceOptimizer({enableMLOptimization:true,enablePredictiveScaling:true}).start())\"",
     "breakthrough:full": "npm run breakthrough:optimize && npm run breakthrough:memory && npm run breakthrough:performance",
-
     "concurrent:optimize": "node src/concurrent-node-optimizer.js",
     "concurrent:python": "python3 src/concurrent-performance-optimizer.py",
     "concurrent:full": "npm run concurrent:python && npm run concurrent:optimize",
     "concurrent:breakthrough": "npm run concurrent:full && npm run ultra:optimize && npm run breakthrough:optimize",
     "concurrent:realtime": "curl -X POST http://localhost:8080/optimization/optimize -H 'Content-Type: application/json' -d '{\"aggressive\":true,\"systems\":[\"all\"]}'",
-
     "performance:analyze": "node scripts/optimize-text-selection.js",
     "performance:monitor": "node scripts/performance-optimizer.js",
     "performance:report": "npm run concurrent:python && node scripts/autonomous-performance-optimizer.js",
@@ -64,7 +62,6 @@
     "performance:nitric": "curl -s http://localhost:4001/metrics | jq .",
     "performance:optimization": "curl -s http://localhost:8080/optimization | jq .",
     "performance:health": "curl -s http://localhost:8080/health | jq .",
-
     "nitric:install": "curl -L https://nitric.io/install?version=latest | bash",
     "nitric:init": "cd src/nitric && npm install",
     "nitric:dev": "nitric start",
@@ -75,18 +72,15 @@
     "nitric:deploy:gcp": "nitric up --provider gcp",
     "nitric:deploy:multi": "NITRIC_PROVIDERS=aws,azure,gcp nitric up",
     "nitric:test": "curl -f http://localhost:4001/health && curl -f http://localhost:4001/history",
-
     "build:website": "node -e \"const fs=require('fs'),path=require('path');const src='website',out='website/dist';console.log('Building optimized website...');try{fs.rmSync(out,{recursive:true,force:true})}catch(e){}fs.mkdirSync(out,{recursive:true});const copy=(s,d)=>{const st=fs.statSync(s);if(st.isDirectory()){fs.mkdirSync(d,{recursive:true});for(const f of fs.readdirSync(s)){copy(path.join(s,f),path.join(d,f))}}else{let data=fs.readFileSync(s,'utf8');if(s.endsWith('.html')){data=data.replace(/\\s+/g,' ').replace(/\\n\\s*/g,'').replace(/<!--.*?-->/g,'').trim()}if(s.endsWith('.css')){data=data.replace(/\\s{2,}/g,' ').replace(/\\/\\*.*?\\*\\//g,'').replace(/\\n/g,'').trim()}if(s.endsWith('.js')){data=data.replace(/\\s{2,}/g,' ').replace(/\\n\\s*/g,' ').trim()}fs.writeFileSync(d,data,'utf8')}};copy(src,out);console.log('✅ Website built with ultra optimization');console.log('📦 Files optimized: HTML minified, CSS/JS compressed, Performance enhanced');console.log('🚀 Ready for deployment with breakthrough performance');\"",
     "dev:website": "python3 -m http.server 4322 --directory website 2>/dev/null || python -m http.server 4322 --directory website",
     "test:website": "npm run build:website && echo 'Testing ultra-optimized website...' && ls -la website/dist/",
-
     "chat": "node src/chat-launcher.js",
     "bridge:server": "node src/ai-bridge.js",
     "bridge:client": "node src/ai-bridge-client.js",
     "bridge:optimized": "node src/ai-bridge-optimized.js",
     "bridge:selection-wiring": "node src/wiring/selection-wiring.js",
     "agents:coordinator": "node src/agents/agent-coordinator.js",
-
     "build": "npm run build:tools && tsc",
     "build:tools": "node scripts/build-tools.js",
     "build:optimized": "npm run build:tools && tsc --build --incremental",
@@ -94,10 +88,8 @@
     "build:ultra": "npm run concurrent:breakthrough && npm run build:optimized --max-old-space-size=8192 && npm run build:website",
     "build:autonomous": "npm run optimize:ultra && npm run build:ultra",
     "prebuild": "npm run build:tools",
-
     "cloud-sql:setup": "node scripts/cloud-sql-setup.js",
     "cloud-sql:persist": "node scripts/cloud-sql-setup.js",
-
     "test:bridge": "cross-env NODE_OPTIONS=--experimental-vm-modules node --test tests/ai-bridge.test.js",
     "pretest": "npm run build --silent",
     "test": "cross-env NODE_OPTIONS=--experimental-vm-modules node --test tests || echo 'No tests found'",
@@ -109,17 +101,14 @@
     "test:concurrent": "npm run concurrent:optimize && npm run test",
     "test:nitric": "npm run nitric:test",
     "test:optimization": "node -e \"import('./src/optimization/optimization-orchestrator.js').then(m => {const o = new m.default(); o.start().then(() => setTimeout(() => o.stop(), 10000))})\"",
-
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"**/*.{js,json,md}\"",
-
     "validate": "npm run lint && npm run test",
     "validate:full": "npm run concurrent:optimize && npm run validate",
     "validate:ultra": "npm run concurrent:breakthrough && npm run validate:full",
     "validate:nitric": "npm run nitric:test && npm run validate",
     "validate:optimization": "npm run test:optimization && npm run validate:ultra",
-
     "dev": "npm run build:tools && node --watch server-optimized.js",
     "dev:concurrent": "npm run concurrent:optimize && node --watch --expose-gc server-optimized.js",
     "dev:optimized": "npm run optimize:autonomous && node --watch --expose-gc server-optimized.js",
@@ -127,7 +116,6 @@
     "dev:ultra": "npm run concurrent:breakthrough && node --watch --expose-gc --max-old-space-size=8192 server-optimized.js",
     "dev:nitric": "npm run nitric:dev",
     "dev:autonomous": "npm run optimize:ultra && node --watch --expose-gc server-optimized.js",
-
     "clean": "rm -rf dist node_modules",
     "clean:cache": "rm -rf dist",
     "clean:website": "rm -rf website/dist",
@@ -136,34 +124,27 @@
     "clean:nitric": "rm -f nitric-deployment-report.json",
     "clean:optimization": "rm -f optimization_*.log performance_*.json memory_*.cache",
     "clean:all": "npm run clean:cache && npm run clean:website && npm run clean:reports && npm run clean:concurrent && npm run clean:nitric && npm run clean:optimization",
-
     "reset": "npm run clean && npm install",
     "reset:ultra": "npm run clean:all && npm install && npm run optimize:ultra",
-
     "deploy:prepare": "npm run concurrent:full && npm run build:production",
     "deploy:ultra": "npm run concurrent:breakthrough && npm run build:ultra",
     "deploy:concurrent": "npm run concurrent:breakthrough && npm run deploy:ultra",
     "deploy:nitric": "npm run build:website && npm run nitric:deploy",
     "deploy:production": "npm run deploy:nitric",
     "deploy:autonomous": "npm run optimize:ultra && npm run deploy:ultra",
-
-    "health:check": "curl -s http://localhost:8080/health | jq .",
     "health:concurrent": "curl -s http://localhost:8080/metrics/concurrent | jq .",
     "health:nitric": "curl -s http://localhost:4001/health | jq .",
     "health:optimization": "curl -s http://localhost:8080/optimization | jq .",
     "health:performance": "curl -s http://localhost:8080/performance | jq .",
-
     "monitoring:start": "npm run performance:concurrent && npm run performance:monitor",
     "monitoring:concurrent": "watch -n 5 'npm run health:concurrent'",
     "monitoring:nitric": "watch -n 5 'npm run health:nitric'",
     "monitoring:optimization": "watch -n 3 'npm run health:optimization'",
     "monitoring:ultra": "npm run monitoring:optimization && npm run monitoring:concurrent",
-
     "system:optimize": "npm run concurrent:breakthrough",
     "system:concurrent": "npm run concurrent:full && npm run monitoring:concurrent",
     "system:nitric": "npm run nitric:dev && npm run monitoring:nitric",
     "system:autonomous": "npm run optimize:orchestrator && npm run monitoring:ultra",
-
     "production:full": "npm run deploy:concurrent && npm run monitoring:start && npm run health:check",
     "production:concurrent": "npm run start:ultra",
     "production:nitric": "npm run deploy:nitric && npm run monitoring:nitric",
@@ -222,26 +203,26 @@
     "@anthropic-ai/sdk": "^0.32.1",
     "@modelcontextprotocol/sdk": "^1.0.4",
     "@nitric/sdk": "^1.4.2",
-    "better-sqlite3": "^11.8.1",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.7",
-    "express": "^4.21.2",
-    "fs-extra": "^11.2.0",
-    "zod": "^3.24.1",
+    "better-sqlite3": "^11.10.0",
     "compression": "^1.7.4",
-    "helmet": "^8.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.21.2",
     "express-rate-limit": "^7.4.1",
+    "fs-extra": "^11.2.0",
+    "helmet": "^8.0.0",
     "lru-cache": "^11.0.2",
-    "winston": "^3.17.0"
+    "winston": "^3.17.0",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
     "@types/better-sqlite3": "^7.6.12",
+    "@types/compression": "^1.7.5",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/jest": "^29.5.14",
     "@types/node": "^22.10.2",
-    "@types/compression": "^1.7.5",
     "cross-env": "^7.0.3",
     "eslint": "^9.17.0",
     "eslint-config-prettier": "^9.1.0",
@@ -321,22 +302,40 @@
     "systems": {
       "realtime_optimization_engine": {
         "enabled": true,
-        "features": ["predictive_optimization", "ml_decisions", "worker_threads"],
+        "features": [
+          "predictive_optimization",
+          "ml_decisions",
+          "worker_threads"
+        ],
         "performance_target": "breakthrough"
       },
       "intelligent_memory_manager": {
         "enabled": true,
-        "features": ["leak_detection", "smart_gc", "heap_optimization", "memory_pools"],
+        "features": [
+          "leak_detection",
+          "smart_gc",
+          "heap_optimization",
+          "memory_pools"
+        ],
         "performance_target": "ultra"
       },
       "enhanced_performance_optimizer": {
         "enabled": true,
-        "features": ["cpu_optimization", "io_optimization", "network_optimization", "caching"],
+        "features": [
+          "cpu_optimization",
+          "io_optimization",
+          "network_optimization",
+          "caching"
+        ],
         "performance_target": "maximum"
       },
       "optimization_orchestrator": {
         "enabled": true,
-        "features": ["system_coordination", "conflict_resolution", "autonomous_tuning"],
+        "features": [
+          "system_coordination",
+          "conflict_resolution",
+          "autonomous_tuning"
+        ],
         "performance_target": "coordinated_excellence"
       }
     },
