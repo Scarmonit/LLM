@@ -36,6 +36,7 @@
     "optimize:performance": "node -e \"import('./src/optimization/enhanced-performance-optimizer.js').then(m => new m.EnhancedPerformanceOptimizer().start())\"",
     "optimize:orchestrator": "node -e \"import('./src/optimization/optimization-orchestrator.js').then(m => new m.default().start())\"",
     "optimize:codestral": "node scripts/codestral-autonomous-optimizer.js",
+    "optimize:full-ai": "npm run optimize:codestral && npm run ultra:optimize && npm run breakthrough:optimize",
 
     "ultra:optimize": "node scripts/ultra-optimization-nexus.js",
     "ultra:memory": "npm run optimize:memory-manager",
