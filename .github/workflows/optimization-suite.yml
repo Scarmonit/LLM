@@ -14,15 +14,15 @@ on:
         options:
           - all
           - bridge-demo
-          - tab-analysis
-          - cloud-sql
+          - ultra-demo
+          - performance
       custom_text:
         description: 'Custom text for analysis (optional)'
         required: false
         type: string
 
 jobs:
-  bridge-hardened-test:
+  bridge-demo-test:
     runs-on: ubuntu-latest
     if: contains(github.event.inputs.optimization_type, 'bridge-demo') || github.event.inputs.optimization_type == 'all' || github.event_name != 'workflow_dispatch'
     steps:
@@ -30,14 +30,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'npm'
       - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Run bridge demo
         run: |
-          npm ci
-          npm install --save-dev ws
-      - name: Run hardened bridge demo
-        run: |
-          echo "Running hardened bridge demo..."
-          node examples/bridge-demo-hardened.js | tee bridge-results.json
+          echo "Running bridge demo..."
+          node examples/bridge-demo.js | tee bridge-results.json
           test -s bridge-results.json
       - name: Upload bridge results
         uses: actions/upload-artifact@v4
@@ -46,54 +45,86 @@ jobs:
           path: bridge-results.json
       - name: Bridge demo summary
         run: |
-          echo "### 🌉 Hardened Bridge Demo Results" >> $GITHUB_STEP_SUMMARY
+          echo "### 🌉 Bridge Demo Results" >> $GITHUB_STEP_SUMMARY
           echo '```json' >> $GITHUB_STEP_SUMMARY
           cat bridge-results.json >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
 
-  tab-text-optimization:
+  ultra-demo-test:
     runs-on: ubuntu-latest
-    if: contains(github.event.inputs.optimization_type, 'tab-analysis') || github.event.inputs.optimization_type == 'all' || github.event_name != 'workflow_dispatch'
+    if: contains(github.event.inputs.optimization_type, 'ultra-demo') || github.event.inputs.optimization_type == 'all' || github.event_name != 'workflow_dispatch'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm ci
-      - name: Run tab and text optimization analysis
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Run ultra-optimized demo
         env:
-          CUSTOM_TEXT: ${{ github.event.inputs.custom_text }}
+          LOG_LEVEL: info
+          COMPRESSION_THRESHOLD: 1024
         run: |
-          echo "Running tab and text optimization analysis..."
-          node scripts/tab-text-optimizer.js
-      - name: Upload optimization results
+          echo "Running ultra-optimized demo..."
+          node examples/bridge-demo-ultra.js | tee ultra-results.json
+          test -s ultra-results.json
+      - name: Upload ultra results
         uses: actions/upload-artifact@v4
         with:
-          name: optimization-results
-          path: optimization-results/
-      - name: Display optimization summary
+          name: ultra-demo-results
+          path: ultra-results.json
+      - name: Ultra demo summary
         run: |
-          echo "### 📊 Tab & Text Optimization Results" >> $GITHUB_STEP_SUMMARY
-          if [ -f optimization-results/summary.md ]; then
-            cat optimization-results/summary.md >> $GITHUB_STEP_SUMMARY
-          else
-            echo "No optimization results generated" >> $GITHUB_STEP_SUMMARY
-          fi
+          echo "### ⚡ Ultra-Optimized Demo Results" >> $GITHUB_STEP_SUMMARY
+          echo '```json' >> $GITHUB_STEP_SUMMARY
+          cat ultra-results.json >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
 
-  cloud-sql-optimization:
+  performance-optimization:
     runs-on: ubuntu-latest
-    if: contains(github.event.inputs.optimization_type, 'cloud-sql') || github.event.inputs.optimization_type == 'all' || github.event_name != 'workflow_dispatch'
+    if: contains(github.event.inputs.optimization_type, 'performance') || github.event.inputs.optimization_type == 'all' || github.event_name != 'workflow_dispatch'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm ci
-      - name: Run Cloud SQL optimization
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Run performance optimizer
         run: |
-          echo "Running Cloud SQL optimization analysis..."
-          node scripts/cloud-sql-optimizer.js
-      - name: Cloud SQL optimization summary
+          echo "Running performance optimization analysis..."
+          node scripts/performance-optimizer.js | tee perf-results.json
+          test -s perf-results.json
+      - name: Upload performance results
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-results
+          path: perf-results.json
+      - name: Performance summary
         run: |
-          echo "### ☁️ Cloud SQL Optimization Results" >> $GITHUB_STEP_SUMMARY
-          echo "Cloud SQL optimization complete" >> $GITHUB_STEP_SUMMARY
+          echo "### 📊 Performance Optimization Results" >> $GITHUB_STEP_SUMMARY
+          echo '```json' >> $GITHUB_STEP_SUMMARY
+          cat perf-results.json >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+  validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Run validation
+        run: |
+          npm run lint
+          npm run format:check
+          npm run test
+      - name: Validation summary
+        run: |
+          echo "### ✅ Code Quality Validation" >> $GITHUB_STEP_SUMMARY
+          echo "All linting, formatting, and tests passed successfully" >> $GITHUB_STEP_SUMMARY
