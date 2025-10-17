@@ -21,8 +21,7 @@
     "agents/**/*.ts",
     "adapters/**/*.ts",
     "tools/**/*.ts",
-    "tests/**/*.ts",
     "orchestrator.ts"
   ],
-  "exclude": ["node_modules", "dist"]
+  "exclude": ["node_modules", "dist", "tests"]
 }
