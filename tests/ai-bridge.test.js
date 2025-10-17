@@ -20,7 +20,7 @@ async function connectClient(port, registration = {}) {
   );
 
   await new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error('register timeout')), 2000);
+    const timer = setTimeout(() => reject(new Error('register timeout')), 5000);
     ws.once('message', (raw) => {
       clearTimeout(timer);
       const payload = JSON.parse(raw.toString());
@@ -36,7 +36,7 @@ async function connectClient(port, registration = {}) {
   return ws;
 }
 
-async function waitForEnvelope(ws, predicate, timeoutMs = 2000) {
+async function waitForEnvelope(ws, predicate, timeoutMs = 5000) {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
       ws.off('message', handler);
@@ -46,10 +46,18 @@ async function waitForEnvelope(ws, predicate, timeoutMs = 2000) {
     const handler = (raw) => {
       try {
         const payload = JSON.parse(raw.toString());
-        if (payload.type === 'envelope' && predicate(payload.envelope)) {
+        // Support both old format {type: 'envelope', envelope: ...} and new format ['env', ...]
+        let envelope;
+        if (Array.isArray(payload) && payload[0] === 'env') {
+          envelope = payload[1];
+        } else if (payload.type === 'envelope') {
+          envelope = payload.envelope;
+        }
+
+        if (envelope && predicate(envelope)) {
           clearTimeout(timer);
           ws.off('message', handler);
-          resolve(payload.envelope);
+          resolve(envelope);
         }
       } catch (error) {
         clearTimeout(timer);

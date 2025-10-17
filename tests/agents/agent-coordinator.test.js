@@ -13,11 +13,12 @@ import { startAgentCoordinator } from '../../src/agents/agent-coordinator.js';
   registry.register({ id: aId, role: 'summarizer', skills: ['summarize'], intents: ['agent.prompt','agent.response'] });
   registry.register({ id: bId, role: 'critic', skills: ['review'], intents: ['agent.review','agent.response'] });
 
-  // Listen for routed messages
+  // Listen for routed messages - bridge emits events after processing
   let routedPrompt = null;
-  bridge.on('envelopeProcessed', (env) => {
+  const handler = (env) => {
     if (env.intent === 'agent.prompt' && env.to === aId) routedPrompt = env;
-  });
+  };
+  bridge.on('envelopeProcessed', handler);
 
   // Send a prompt targeting role `summarizer`
   bridge.acceptEnvelope({
