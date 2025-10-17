@@ -435,6 +435,7 @@ export async function createAIBridgeServer({
   wss.on('connection', (ws, req) => {
     const origin = req.headers.origin;
     if (!bridge._isOriginAllowed(origin)) {
+      logger.warn(`[Bridge] Origin not allowed: ${origin}`);
       ws.close(1008, 'Origin not allowed');
       return;
     }

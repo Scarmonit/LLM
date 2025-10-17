@@ -8,6 +8,35 @@ import { createAIBridgeServer } from '../src/ai-bridge.js';
 async function connectClient(port, registration = {}) {
   const ws = new WebSocket(`ws://127.0.0.1:${port}`);
   await once(ws, 'open');
+
+  // Set up message handler BEFORE sending registration to avoid race condition
+  const registrationPromise = new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('register timeout')), 5000);
+    const handler = (raw) => {
+      clearTimeout(timer);
+      try {
+        const payload = JSON.parse(raw.toString());
+        if (payload.type !== 'registered') {
+          reject(new Error('Unexpected registration response'));
+          return;
+        }
+        ws.off('message', handler);
+        ws.off('error', errorHandler);
+        resolve(payload);
+      } catch (error) {
+        reject(error);
+      }
+    };
+    const errorHandler = (error) => {
+      clearTimeout(timer);
+      ws.off('message', handler);
+      reject(error);
+    };
+    ws.on('message', handler);
+    ws.once('error', errorHandler);
+  });
+
+  // Now send registration
   ws.send(
     JSON.stringify({
       type: 'register',
@@ -19,20 +48,7 @@ async function connectClient(port, registration = {}) {
     })
   );
 
-  await new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error('register timeout')), 5000);
-    ws.once('message', (raw) => {
-      clearTimeout(timer);
-      const payload = JSON.parse(raw.toString());
-      if (payload.type !== 'registered') {
-        reject(new Error('Unexpected registration response'));
-        return;
-      }
-      resolve(payload);
-    });
-    ws.once('error', reject);
-  });
-
+  await registrationPromise;
   return ws;
 }
 
@@ -145,11 +161,45 @@ test('direct envelopes queue for offline agents', async () => {
       })
     );
 
-    docAgent = await connectClient(server.ports.ws, { clientId: 'docs', role: 'documentation' });
-    const envelope = await waitForEnvelope(
-      docAgent,
-      (msg) => msg.intent === 'task.assign' && msg.from === 'orchestrator'
+    // Give the server a moment to queue the message
+    await new Promise(resolve => setTimeout(resolve, 50));
+
+    // Create a WebSocket and set up message listener BEFORE registration completes
+    const ws = new WebSocket(`ws://127.0.0.1:${server.ports.ws}`);
+    await once(ws, 'open');
+
+    // Set up envelope listener immediately
+    const envelopePromise = waitForEnvelope(
+      ws,
+      (msg) => msg.intent === 'task.assign' && msg.from === 'orchestrator',
+      3000
     );
+
+    // Now register (which triggers queued message delivery)
+    ws.send(JSON.stringify({
+      type: 'register',
+      clientId: 'docs',
+      role: 'documentation',
+    }));
+
+    // Wait for registration response
+    await new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('register timeout')), 5000);
+      const handler = (raw) => {
+        const payload = JSON.parse(raw.toString());
+        if (payload.type === 'registered') {
+          clearTimeout(timer);
+          ws.off('message', handler);
+          resolve();
+        }
+      };
+      ws.on('message', handler);
+    });
+
+    docAgent = ws;
+
+    // Now wait for the queued envelope
+    const envelope = await envelopePromise;
 
     assert.equal(envelope.payload.goal, 'Write documentation');
     assert.equal(envelope.to, 'docs');
