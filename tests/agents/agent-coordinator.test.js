@@ -1,5 +1,5 @@
 import { strict as assert } from 'assert';
-import { startAgentCoordinator } from '../src/agents/agent-coordinator.js';
+import { startAgentCoordinator } from '../../src/agents/agent-coordinator.js';
 
 (async () => {
   const { server, registry } = await startAgentCoordinator();
