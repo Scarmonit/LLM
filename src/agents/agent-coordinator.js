@@ -4,8 +4,8 @@
 import { createAIBridgeServer } from '../ai-bridge.js';
 import { AgentRegistry, TaskGuard } from './agent-registry.js';
 
-export async function startAgentCoordinator() {
-  const server = await createAIBridgeServer();
+export async function startAgentCoordinator(options = {}) {
+  const server = await createAIBridgeServer(options);
   const { bridge } = server;
 
   const registry = new AgentRegistry();
