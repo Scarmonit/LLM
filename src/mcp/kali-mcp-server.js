@@ -5,6 +5,7 @@ import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprot
 import { spawn } from 'child_process';
 import axios from 'axios';
 import { URL } from 'url';
+import { promises as dns } from 'dns';
 
 /**
  * Kali Linux MCP Server
@@ -126,6 +127,9 @@ class KaliMCPServer {
       throw new Error('Invalid target format');
     }
 
+    // DNS resolution and SSRF protection
+    await this.resolveAndValidate(target);
+
     // Build nmap arguments
     const args = [];
     switch (scanType) {
@@ -138,6 +142,8 @@ class KaliMCPServer {
       case 'service':
         args.push('-sV', target); // Service version detection
         break;
+      default:
+        throw new Error(`Invalid scanType: ${scanType}`);
     }
 
     const output = await this.executeCommand('nmap', args, 60000);
@@ -174,10 +180,8 @@ class KaliMCPServer {
       throw new Error('Invalid URL format');
     }
 
-    // SSRF protection
-    if (this.isPrivateIP(parsedUrl.hostname)) {
-      throw new Error('Access to private IP ranges is not allowed');
-    }
+    // DNS resolution and SSRF protection
+    await this.resolveAndValidate(parsedUrl.hostname);
 
     try {
       const response = await axios.get(url, {
@@ -185,6 +189,22 @@ class KaliMCPServer {
         maxRedirects: 3,
         headers: {
           'User-Agent': 'Kali-MCP-Server/1.0',
+        },
+        validateStatus: function (status) {
+          // Accept only 2xx status codes
+          return status >= 200 && status < 300;
+        },
+        beforeRedirect: (options, responseDetails) => {
+          // SSRF protection: check redirect target
+          try {
+            const redirectUrl = new URL(options.href || options.protocol + '//' + options.hostname + options.path);
+            // Synchronously check if hostname matches private IP patterns
+            if (this.isPrivateIP(redirectUrl.hostname)) {
+              throw new Error('Redirect to private IP ranges is not allowed');
+            }
+          } catch (err) {
+            throw new Error('Invalid redirect URL');
+          }
         },
       });
 
@@ -208,33 +228,41 @@ class KaliMCPServer {
       }
 
       // Basic content analysis
-      const html = response.data.toLowerCase();
-      if (html.includes('react')) {
+      let html = '';
+      if (typeof response.data === 'string') {
+        html = response.data.toLowerCase();
+      }
+
+      // React detection: look for data-reactroot attribute or react script
+      if (/<[^>]+data-reactroot/.test(html) || /<script[^>]+src=["'][^"']*react[^"']*["']/.test(html)) {
         technologies.push({
           name: 'React',
           category: 'JavaScript Framework',
-          confidence: 'medium',
+          confidence: 'high',
         });
       }
-      if (html.includes('vue')) {
+      // Vue.js detection: look for vue script or id="app" element
+      if (/<script[^>]+src=["'][^"']*vue(\.js)?[^"']*["']/.test(html) || /<div[^>]+id=["']app["']/.test(html)) {
         technologies.push({
           name: 'Vue.js',
           category: 'JavaScript Framework',
-          confidence: 'medium',
+          confidence: 'high',
         });
       }
-      if (html.includes('angular')) {
+      // Angular detection: look for ng-app/ng-version attributes or angular script
+      if (/<[^>]+ng-app/.test(html) || /<[^>]+ng-version/.test(html) || /<script[^>]+src=["'][^"']*angular[^"']*["']/.test(html)) {
         technologies.push({
           name: 'Angular',
           category: 'JavaScript Framework',
-          confidence: 'medium',
+          confidence: 'high',
         });
       }
-      if (html.includes('wordpress')) {
+      // WordPress detection: look for generator meta tag or /wp-content/ URLs
+      if (/<meta[^>]+name=["']generator["'][^>]+content=["']wordpress[^"']*["']/.test(html) || /\/wp-content\//.test(html)) {
         technologies.push({
           name: 'WordPress',
           category: 'CMS',
-          confidence: 'high',
+          confidence: 'medium',
         });
       }
 
@@ -301,7 +329,7 @@ class KaliMCPServer {
       const proc = spawn(command, args);
 
       const timer = setTimeout(() => {
-        proc.kill();
+        proc.kill('SIGKILL');
         reject(new Error(`Command timeout after ${timeout}ms`));
       }, timeout);
 
@@ -333,20 +361,38 @@ class KaliMCPServer {
    * Validate target format
    */
   isValidTarget(target) {
-    // IP address pattern
-    const ipPattern = /^(\d{1,3}\.){3}\d{1,3}$/;
+    // IP address validation with octet range check
+    const ipPattern = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+    const ipMatch = target.match(ipPattern);
+    if (ipMatch) {
+      const octets = ipMatch.slice(1, 5).map(Number);
+      // Validate each octet is between 0-255
+      if (octets.every(o => o >= 0 && o <= 255)) {
+        return true;
+      }
+      return false;
+    }
+    
     // Domain pattern
     const domainPattern = /^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$/i;
 
-    return ipPattern.test(target) || domainPattern.test(target);
+    return domainPattern.test(target);
   }
 
   /**
    * Validate CIDR notation
    */
   isValidCIDR(cidr) {
-    const pattern = /^(\d{1,3}\.){3}\d{1,3}\/\d{1,2}$/;
-    return pattern.test(cidr);
+    // Match and extract octets and mask
+    const match = cidr.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})\/(\d{1,2})$/);
+    if (!match) return false;
+    const [_, o1, o2, o3, o4, mask] = match;
+    const octets = [o1, o2, o3, o4].map(Number);
+    const maskNum = Number(mask);
+    // Validate octets and mask ranges
+    if (octets.some(o => o < 0 || o > 255)) return false;
+    if (maskNum < 0 || maskNum > 32) return false;
+    return true;
   }
 
   /**
@@ -354,14 +400,60 @@ class KaliMCPServer {
    */
   isPrivateIP(hostname) {
     const privateRanges = [
-      /^127\./,
-      /^10\./,
-      /^172\.(1[6-9]|2[0-9]|3[0-1])\./,
-      /^192\.168\./,
-      /^localhost$/i,
+      /^127\./,                              // Loopback
+      /^10\./,                               // Private Class A
+      /^172\.(1[6-9]|2[0-9]|3[0-1])\./,     // Private Class B
+      /^192\.168\./,                         // Private Class C
+      /^169\.254\./,                         // Link-local
+      /^localhost$/i,                        // Localhost
+      /^::1$/,                               // IPv6 loopback
+      /^fe80:/i,                             // IPv6 link-local
+      /^fc00:/i,                             // IPv6 unique local
+      /^fd00:/i,                             // IPv6 unique local
     ];
 
     return privateRanges.some((pattern) => pattern.test(hostname));
+  }
+
+  /**
+   * Resolve hostname to IP and validate against private ranges (DNS rebinding protection)
+   */
+  async resolveAndValidate(hostname) {
+    // If already an IP, validate it directly
+    const ipPattern = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+    if (ipPattern.test(hostname)) {
+      if (this.isPrivateIP(hostname)) {
+        throw new Error('Access to private IP ranges is not allowed');
+      }
+      return;
+    }
+
+    // Check hostname pattern first
+    if (this.isPrivateIP(hostname)) {
+      throw new Error('Access to private IP ranges is not allowed');
+    }
+
+    // Resolve DNS with timeout
+    try {
+      const addresses = await Promise.race([
+        dns.lookup(hostname, { all: true }),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('DNS lookup timeout')), 5000)
+        ),
+      ]);
+
+      // Validate all resolved IPs
+      for (const addr of addresses) {
+        if (this.isPrivateIP(addr.address)) {
+          throw new Error(`DNS resolves to private IP: ${addr.address}`);
+        }
+      }
+    } catch (error) {
+      if (error.code === 'ENOTFOUND') {
+        throw new Error(`Unable to resolve hostname: ${hostname}`);
+      }
+      throw error;
+    }
   }
 
   /**
