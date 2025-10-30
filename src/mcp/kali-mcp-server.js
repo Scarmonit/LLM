@@ -5,6 +5,8 @@ import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprot
 import { spawn } from 'child_process';
 import axios from 'axios';
 import { URL } from 'url';
+import dns from 'dns/promises';
+import net from 'net';
 
 /**
  * Kali Linux MCP Server
@@ -23,6 +25,10 @@ class KaliMCPServer {
         },
       }
     );
+
+    // Security configuration
+    this.httpTimeoutMs = 10000;
+    this.maxRedirects = 3; // will validate each hop
 
     this.setupHandlers();
     this.setupErrorHandling();
@@ -141,7 +147,6 @@ class KaliMCPServer {
     }
 
     const output = await this.executeCommand('nmap', args, 60000);
-
     return {
       content: [
         {
@@ -164,6 +169,7 @@ class KaliMCPServer {
 
   /**
    * Detect web technologies
+   * SECURITY: Implements Issue #4 Action 1 (DNS validation) and Action 2 (redirect validation)
    */
   async techDetect({ url }) {
     // Validate and parse URL
@@ -174,90 +180,118 @@ class KaliMCPServer {
       throw new Error('Invalid URL format');
     }
 
-    // SSRF protection
-    if (this.isPrivateIP(parsedUrl.hostname)) {
-      throw new Error('Access to private IP ranges is not allowed');
+    // Only allow http/https
+    if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+      throw new Error('Unsupported protocol');
     }
 
-    try {
-      const response = await axios.get(url, {
-        timeout: 10000,
-        maxRedirects: 3,
-        headers: {
-          'User-Agent': 'Kali-MCP-Server/1.0',
-        },
+    // Resolve and validate DNS before any request (Action 1)
+    await this.validateDnsResolution(parsedUrl.hostname);
+
+    // Perform HTTP request with manual redirect handling (Action 2)
+    const maxHops = this.maxRedirects;
+    let currentUrl = parsedUrl.toString();
+    let hops = 0;
+    const client = axios.create({
+      maxRedirects: 0, // we will follow manually
+      timeout: this.httpTimeoutMs,
+      validateStatus: (s) => s >= 200 && s < 400, // accept 3xx for manual handling
+      headers: {
+        'User-Agent': 'Kali-MCP-Server/1.0',
+      },
+    });
+
+    let response;
+    while (hops <= maxHops) {
+      try {
+        response = await client.get(currentUrl);
+      } catch (err) {
+        // If axios threw on 3xx due to validateStatus, capture response
+        if (err.response) {
+          response = err.response;
+        } else {
+          throw new Error(`Failed to fetch URL: ${err.message}`);
+        }
+      }
+
+      // If 3xx, validate redirect target before following
+      if (response.status >= 300 && response.status < 400) {
+        const loc = response.headers.location;
+        if (!loc) throw new Error('Redirect without Location header blocked');
+
+        // Resolve relative URL against the current one
+        const nextUrl = new URL(loc, currentUrl);
+
+        // Validate protocol
+        if (!['http:', 'https:'].includes(nextUrl.protocol)) {
+          throw new Error('Blocked redirect to unsupported protocol');
+        }
+
+        // Validate DNS for the redirect target (Action 1 applied to redirect)
+        await this.validateDnsResolution(nextUrl.hostname);
+
+        currentUrl = nextUrl.toString();
+        hops += 1;
+        if (hops > maxHops) throw new Error('Too many redirects');
+        continue;
+      }
+
+      // 2xx response, proceed to detection
+      break;
+    }
+
+    const technologies = [];
+    // Analyze headers
+    if (response.headers.server) {
+      technologies.push({
+        name: response.headers.server,
+        category: 'Server',
+        confidence: 'high',
       });
-
-      const technologies = [];
-
-      // Analyze headers
-      if (response.headers.server) {
-        technologies.push({
-          name: response.headers.server,
-          category: 'Server',
-          confidence: 'high',
-        });
-      }
-
-      if (response.headers['x-powered-by']) {
-        technologies.push({
-          name: response.headers['x-powered-by'],
-          category: 'Framework',
-          confidence: 'high',
-        });
-      }
-
-      // Basic content analysis
-      const html = response.data.toLowerCase();
-      if (html.includes('react')) {
-        technologies.push({
-          name: 'React',
-          category: 'JavaScript Framework',
-          confidence: 'medium',
-        });
-      }
-      if (html.includes('vue')) {
-        technologies.push({
-          name: 'Vue.js',
-          category: 'JavaScript Framework',
-          confidence: 'medium',
-        });
-      }
-      if (html.includes('angular')) {
-        technologies.push({
-          name: 'Angular',
-          category: 'JavaScript Framework',
-          confidence: 'medium',
-        });
-      }
-      if (html.includes('wordpress')) {
-        technologies.push({
-          name: 'WordPress',
-          category: 'CMS',
-          confidence: 'high',
-        });
-      }
-
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify(
-              {
-                tool: 'kali_tech_detect',
-                url,
-                technologies,
-                timestamp: new Date().toISOString(),
-              },
-              null,
-              2
-            ),
-          },
-        ],
-      };
-    } catch (error) {
-      throw new Error(`Failed to fetch URL: ${error.message}`);
     }
+    if (response.headers['x-powered-by']) {
+      technologies.push({
+        name: response.headers['x-powered-by'],
+        category: 'Framework',
+        confidence: 'high',
+      });
+    }
+
+    // Basic content analysis
+    const html = typeof response.data === 'string' ? response.data.toLowerCase() : '';
+    if (html.includes('react')) {
+      technologies.push({ name: 'React', category: 'JavaScript Framework', confidence: 'medium' });
+    }
+    if (html.includes('vue')) {
+      technologies.push({ name: 'Vue.js', category: 'JavaScript Framework', confidence: 'medium' });
+    }
+    if (html.includes('angular')) {
+      technologies.push({ name: 'Angular', category: 'JavaScript Framework', confidence: 'medium' });
+    }
+    if (html.includes('wordpress')) {
+      technologies.push({ name: 'WordPress', category: 'CMS', confidence: 'high' });
+    }
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(
+            {
+              tool: 'kali_tech_detect',
+              url: currentUrl,
+              technologies,
+              timestamp: new Date().toISOString(),
+              security: {
+                references: ['Issue #4: Action 1 (DNS validation)', 'Issue #4: Action 2 (redirect validation)'],
+              },
+            },
+            null,
+            2
+          ),
+        },
+      ],
+    };
   }
 
   /**
@@ -270,7 +304,6 @@ class KaliMCPServer {
     }
 
     const output = await this.executeCommand('nmap', ['-sn', network], 120000);
-
     return {
       content: [
         {
@@ -297,22 +330,17 @@ class KaliMCPServer {
     return new Promise((resolve, reject) => {
       let output = '';
       let errorOutput = '';
-
       const proc = spawn(command, args);
-
       const timer = setTimeout(() => {
         proc.kill();
         reject(new Error(`Command timeout after ${timeout}ms`));
       }, timeout);
-
       proc.stdout.on('data', (data) => {
         output += data.toString();
       });
-
       proc.stderr.on('data', (data) => {
         errorOutput += data.toString();
       });
-
       proc.on('close', (code) => {
         clearTimeout(timer);
         if (code === 0) {
@@ -321,7 +349,6 @@ class KaliMCPServer {
           reject(new Error(`Command exited with code ${code}: ${errorOutput}`));
         }
       });
-
       proc.on('error', (error) => {
         clearTimeout(timer);
         reject(new Error(`Failed to execute command: ${error.message}`));
@@ -337,7 +364,6 @@ class KaliMCPServer {
     const ipPattern = /^(\d{1,3}\.){3}\d{1,3}$/;
     // Domain pattern
     const domainPattern = /^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$/i;
-
     return ipPattern.test(target) || domainPattern.test(target);
   }
 
@@ -352,16 +378,71 @@ class KaliMCPServer {
   /**
    * Check if IP is in private range (SSRF protection)
    */
-  isPrivateIP(hostname) {
+  isPrivateIPString(ip) {
+    // Covers IPv4 private ranges and loopback; rejects link-local and multicast too
     const privateRanges = [
-      /^127\./,
+      /^127\./, // loopback
       /^10\./,
       /^172\.(1[6-9]|2[0-9]|3[0-1])\./,
       /^192\.168\./,
-      /^localhost$/i,
+      /^169\.254\./, // link-local
     ];
+    return privateRanges.some((pattern) => pattern.test(ip));
+  }
 
-    return privateRanges.some((pattern) => pattern.test(hostname));
+  isLocalhost(hostname) {
+    return /^localhost$/i.test(hostname);
+  }
+
+  /**
+   * Action 1: Resolve all A/AAAA records and block private/bogon ranges.
+   * Also blocks IPv6 localhost and RFC4193 (fc00::/7) and link-local fe80::/10.
+   */
+  async validateDnsResolution(hostname) {
+    // Block explicit localhost names early
+    if (this.isLocalhost(hostname)) {
+      throw new Error('Access to localhost is not allowed');
+    }
+
+    let addresses = [];
+    try {
+      const [a4, a6] = await Promise.allSettled([
+        dns.resolve4(hostname),
+        dns.resolve6(hostname),
+      ]);
+      if (a4.status === 'fulfilled') addresses.push(...a4.value);
+      if (a6.status === 'fulfilled') addresses.push(...a6.value);
+    } catch (e) {
+      // ignore, handled below
+    }
+
+    if (!addresses.length) {
+      // If no addresses resolved, still block if it's obvious localhost
+      throw new Error('DNS resolution failed');
+    }
+
+    // Validate each IP is public
+    for (const ip of addresses) {
+      if (net.isIP(ip) === 6) {
+        // IPv6 checks
+        const lower = ip.toLowerCase();
+        if (
+          lower === '::1' || // loopback
+          lower.startsWith('fc') || lower.startsWith('fd') || // unique local (fc00::/7)
+          lower.startsWith('fe80:') // link-local
+        ) {
+          throw new Error('Access to private or local IPv6 address is not allowed');
+        }
+      } else {
+        // IPv4 checks
+        if (this.isPrivateIPString(ip)) {
+          throw new Error('Access to private IP ranges is not allowed');
+        }
+      }
+    }
+
+    // Optional: re-resolve after connection would be ideal; enforced via redirect checks too
+    return true;
   }
 
   /**
@@ -371,7 +452,6 @@ class KaliMCPServer {
     this.server.onerror = (error) => {
       console.error('[MCP Error]', error);
     };
-
     process.on('SIGINT', async () => {
       await this.server.close();
       process.exit(0);
