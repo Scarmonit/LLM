@@ -1,7 +1,5 @@
 name: Pylint
-
 on: [push]
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -20,4 +18,9 @@ jobs:
         pip install pylint
     - name: Analysing the code with pylint
       run: |
-        pylint $(git ls-files '*.py')
+        python_files=$(git ls-files '*.py')
+        if [ -n "$python_files" ]; then
+          pylint $python_files
+        else
+          echo "No Python files found to lint"
+        fi
