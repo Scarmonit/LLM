@@ -319,7 +319,6 @@ class MCPDoctorServer {
       );
 
       // Fix 3: Missing description fields
-      const toolPattern = /{[\s\S]*?name:\s*['"]([^'"]+)['"][\s\S]*?}/g;
       if (!sourceCode.includes('description:')) {
         fixes.push('⚠️  Tools missing descriptions (manual fix recommended)');
       }
