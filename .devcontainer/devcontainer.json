@@ -12,5 +12,5 @@
     "8000": { "label": "API", "onAutoForward": "openBrowser" }
   },
   "postCreateCommand": "pip install -e . && pip install pytest mypy pylint",
-  "postStartCommand": "uvicorn api.app:app --host 0.0.0.0 --port 8000"
+  "postStartCommand": "uvicorn api:app --host 0.0.0.0 --port 8000"
 }
