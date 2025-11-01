@@ -1,0 +1,37 @@
+{
+  "active": true,
+  "activated_at": "2025-10-30T20:52:30Z",
+  "tasks_completed": 4,
+  "last_task": {
+    "type": "feature",
+    "description": "Add user authentication endpoint",
+    "files": [
+      "src/api/auth.js",
+      "tests/auth.test.js"
+    ]
+  },
+  "version": "2.0",
+  "agent_mode": true,
+  "parallel_execution": true,
+  "max_parallel_agents": 6,
+  "mcp_integrations": [
+    "github",
+    "filesystem",
+    "1password"
+  ],
+  "self_healing": true,
+  "checkpoint_enabled": true,
+  "features": {
+    "parallel_analysis": true,
+    "parallel_validation": true,
+    "circuit_breakers": true,
+    "auto_recovery": true,
+    "mcp_github_integration": true,
+    "performance_monitoring": true
+  },
+  "current_workflow": null,
+  "current_phase": null,
+  "workflow_started_at": "2025-10-31T01:41:08.993Z",
+  "last_workflow_success": true,
+  "last_workflow_duration_ms": 720057
+}
