@@ -125,28 +125,27 @@ class KaliMCPServer {
 
   /**
    * Perform Nmap port scan
+   * SECURITY: Fixed Issue #4 - Added DNS validation for SSRF protection
    */
   async nmapScan({ target, scanType = 'quick' }) {
-    // Input validation
+    // Input validation with strict IP/CIDR checks
     if (!this.isValidTarget(target)) {
       throw new Error('Invalid target format');
     }
 
-    // Build nmap arguments
-    const args = [];
-    switch (scanType) {
-      case 'quick':
-        args.push('-F', target); // Fast scan of 100 most common ports
-        break;
-      case 'stealth':
-        args.push('-sS', target); // SYN stealth scan
-        break;
-      case 'service':
-        args.push('-sV', target); // Service version detection
-        break;
+    // SSRF protection: Validate DNS if target is a domain
+    if (!this.isValidIPAddress(target)) {
+      // It's a domain, validate DNS resolution
+      await this.validateDnsResolution(target);
+    } else {
+      // It's an IP, validate it's not private
+      if (this.isPrivateIPString(target)) {
+        throw new Error('Access to private IP ranges is not allowed');
+      }
     }
 
-    const output = await this.executeCommand('nmap', args, 60000);
+    // Build nmap arguments using tool registry
+    const output = await this.executeNmapScan(target, scanType);
     return {
       content: [
         {
@@ -165,6 +164,25 @@ class KaliMCPServer {
         },
       ],
     };
+  }
+
+  /**
+   * Execute nmap scan with specified type
+   * SECURITY: Fixed Issue #4 - Refactored switch to tool registry pattern
+   */
+  async executeNmapScan(target, scanType) {
+    const scanConfigs = {
+      quick: ['-F', target],
+      stealth: ['-sS', target],
+      service: ['-sV', target],
+    };
+
+    const args = scanConfigs[scanType];
+    if (!args) {
+      throw new Error(`Invalid scan type: ${scanType}`);
+    }
+
+    return await this.executeCommand('nmap', args, 60000);
   }
 
   /**
@@ -325,6 +343,7 @@ class KaliMCPServer {
 
   /**
    * Execute command with timeout
+   * SECURITY: Fixed Issue #4 Item 7 - Use SIGKILL for timeout
    */
   executeCommand(command, args, timeout) {
     return new Promise((resolve, reject) => {
@@ -332,7 +351,7 @@ class KaliMCPServer {
       let errorOutput = '';
       const proc = spawn(command, args);
       const timer = setTimeout(() => {
-        proc.kill();
+        proc.kill('SIGKILL'); // Force kill on timeout
         reject(new Error(`Command timeout after ${timeout}ms`));
       }, timeout);
       proc.stdout.on('data', (data) => {
@@ -360,31 +379,59 @@ class KaliMCPServer {
    * Validate target format
    */
   isValidTarget(target) {
-    // IP address pattern
-    const ipPattern = /^(\d{1,3}\.){3}\d{1,3}$/;
-    // Domain pattern
-    const domainPattern = /^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$/i;
-    return ipPattern.test(target) || domainPattern.test(target);
+    return this.isValidIPAddress(target) || this.isValidDomain(target);
   }
 
   /**
-   * Validate CIDR notation
+   * Validate IPv4 address with proper octet checking
+   * SECURITY: Fixed Issue #4 Item 3 - Strict IP validation
+   */
+  isValidIPAddress(ip) {
+    const octets = ip.split('.');
+    if (octets.length !== 4) return false;
+    return octets.every((octet) => {
+      const num = parseInt(octet, 10);
+      return num >= 0 && num <= 255 && octet === num.toString();
+    });
+  }
+
+  /**
+   * Validate domain name
+   */
+  isValidDomain(domain) {
+    const domainPattern = /^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$/i;
+    return domainPattern.test(domain);
+  }
+
+  /**
+   * Validate CIDR notation with proper IP and mask validation
+   * SECURITY: Fixed Issue #4 Item 4 - Strict CIDR validation
    */
   isValidCIDR(cidr) {
-    const pattern = /^(\d{1,3}\.){3}\d{1,3}\/\d{1,2}$/;
-    return pattern.test(cidr);
+    const [ip, mask] = cidr.split('/');
+    if (!mask) return false;
+    const maskNum = parseInt(mask, 10);
+    if (maskNum < 0 || maskNum > 32) return false;
+    return this.isValidIPAddress(ip);
   }
 
   /**
    * Check if IP is in private range (SSRF protection)
+   * SECURITY: Fixed Issue #4 Item 2 - Added cloud metadata and 0.0.0.0 checks
    */
   isPrivateIPString(ip) {
-    // Covers IPv4 private ranges and loopback; rejects link-local and multicast too
+    // Cloud metadata endpoint (AWS, GCP, Azure)
+    if (ip === '169.254.169.254') return true;
+
+    // Localhost variations
+    if (ip === '0.0.0.0' || ip === '127.0.0.1') return true;
+
+    // IPv4 private ranges
     const privateRanges = [
       /^127\./, // loopback
-      /^10\./,
-      /^172\.(1[6-9]|2[0-9]|3[0-1])\./,
-      /^192\.168\./,
+      /^10\./, // Class A private
+      /^172\.(1[6-9]|2[0-9]|3[0-1])\./, // Class B private
+      /^192\.168\./, // Class C private
       /^169\.254\./, // link-local
     ];
     return privateRanges.some((pattern) => pattern.test(ip));
