@@ -1,4 +1,4 @@
-"""LLM Multi-Provider Framework."
+"""LLM Multi-Provider Framework."""
 
 from .orchestrator import Orchestrator
 from .providers.mock import MockProvider
