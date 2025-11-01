@@ -51,6 +51,38 @@ class TerraformMCPServer {
   }
 
   /**
+   * Sanitize argument to prevent command injection
+   * @param {string} arg - Argument to sanitize
+   * @returns {string} - Sanitized argument
+   */
+  sanitizeArgument(arg) {
+    if (typeof arg !== 'string') {
+      throw new Error('Argument must be a string');
+    }
+    // Reject arguments with shell metacharacters
+    if (/[;&|`$(){}[\]<>\\'"!]/.test(arg)) {
+      throw new Error(`Invalid argument contains shell metacharacters: ${arg}`);
+    }
+    return arg;
+  }
+
+  /**
+   * Sanitize file path to prevent path traversal
+   * @param {string} path - Path to sanitize
+   * @returns {string} - Sanitized path
+   */
+  sanitizePath(path) {
+    if (typeof path !== 'string') {
+      throw new Error('Path must be a string');
+    }
+    // Reject paths with dangerous patterns
+    if (path.includes('..') || /[;&|`$(){}[\]<>\\'"!]/.test(path)) {
+      throw new Error(`Invalid path contains dangerous characters: ${path}`);
+    }
+    return path;
+  }
+
+  /**
    * Execute Terraform command
    */
   async executeTerraformCommand(command, args = [], options = {}) {
@@ -62,17 +94,25 @@ class TerraformMCPServer {
         vars = {},
       } = options;
 
-      // Build Terraform command
-      const cmdParts = ['terraform', command];
+      // Input validation - prevent command injection
+      const safeCommand = this.sanitizeArgument(command);
+      const safeWorkingDir = this.sanitizePath(workingDir);
+      const safeArgs = args.map(arg => this.sanitizeArgument(String(arg)));
+
+      // Build Terraform command with safe arguments
+      const cmdParts = ['terraform', safeCommand];
 
       // Add variable file if specified
       if (varFile) {
-        cmdParts.push('-var-file', varFile);
+        const safeVarFile = this.sanitizePath(varFile);
+        cmdParts.push('-var-file', safeVarFile);
       }
 
-      // Add inline variables
+      // Add inline variables (sanitize keys and values)
       Object.entries(vars).forEach(([key, value]) => {
-        cmdParts.push('-var', `${key}=${value}`);
+        const safeKey = this.sanitizeArgument(String(key));
+        const safeValue = this.sanitizeArgument(String(value));
+        cmdParts.push('-var', `${safeKey}=${safeValue}`);
       });
 
       // Add auto-approve for apply/destroy
@@ -81,15 +121,16 @@ class TerraformMCPServer {
       }
 
       // Add additional arguments
-      cmdParts.push(...args);
+      cmdParts.push(...safeArgs);
 
       const cmd = cmdParts.join(' ');
-      logger.info('Executing Terraform command', { cmd, workingDir });
+      logger.info('Executing Terraform command', { cmd, workingDir: safeWorkingDir });
 
       const { stdout, stderr } = await execAsync(cmd, {
-        cwd: workingDir,
+        cwd: safeWorkingDir,
         maxBuffer: 50 * 1024 * 1024, // 50MB buffer for large plans
         timeout: 300000, // 5 minute timeout
+        shell: '/bin/sh', // Explicit shell
         env: {
           ...process.env,
           TF_IN_AUTOMATION: '1', // Disable interactive prompts

@@ -48,6 +48,22 @@ class AWSCliMCPServer {
   }
 
   /**
+   * Sanitize argument to prevent command injection
+   * @param {string} arg - Argument to sanitize
+   * @returns {string} - Sanitized argument
+   */
+  sanitizeArgument(arg) {
+    if (typeof arg !== 'string') {
+      throw new Error('Argument must be a string');
+    }
+    // Reject arguments with shell metacharacters
+    if (/[;&|`$(){}[\]<>\\'"!]/.test(arg)) {
+      throw new Error(`Invalid argument contains shell metacharacters: ${arg}`);
+    }
+    return arg;
+  }
+
+  /**
    * Execute AWS CLI command
    */
   async executeAWSCommand(service, command, args = [], options = {}) {
@@ -58,15 +74,23 @@ class AWSCliMCPServer {
         output = 'json'
       } = options;
 
-      // Build AWS CLI command
+      // Input validation - prevent command injection
+      const safeService = this.sanitizeArgument(service);
+      const safeCommand = this.sanitizeArgument(command);
+      const safeProfile = this.sanitizeArgument(profile);
+      const safeRegion = this.sanitizeArgument(region);
+      const safeOutput = this.sanitizeArgument(output);
+      const safeArgs = args.map(arg => this.sanitizeArgument(String(arg)));
+
+      // Build AWS CLI command with safe arguments
       const cmdParts = [
         'aws',
-        service,
-        command,
-        ...args,
-        '--profile', profile,
-        '--region', region,
-        '--output', output
+        safeService,
+        safeCommand,
+        ...safeArgs,
+        '--profile', safeProfile,
+        '--region', safeRegion,
+        '--output', safeOutput
       ];
 
       const cmd = cmdParts.join(' ');
@@ -75,6 +99,7 @@ class AWSCliMCPServer {
       const { stdout, stderr } = await execAsync(cmd, {
         maxBuffer: 10 * 1024 * 1024, // 10MB buffer
         timeout: 60000, // 60 second timeout
+        shell: '/bin/sh', // Explicit shell
       });
 
       if (stderr && !stdout) {
