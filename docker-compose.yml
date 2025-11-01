@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: python -m uvicorn api:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ./llm:/app/llm
+      - ./api.py:/app/api.py
+      - ./cli.py:/app/cli.py
+
+  # Optional Ollama service (requires Ollama image)
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   ports:
+  #     - "11434:11434"
+  #   volumes:
+  #     - ollama-data:/root/.ollama
+
+# volumes:
+#   ollama-data:
