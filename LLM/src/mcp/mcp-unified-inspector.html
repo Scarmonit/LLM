@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MCP Unified Inspector - Dashboard + Inspector Integration</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 15px 30px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header h1 {
+      font-size: 1.5em;
+      color: white;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .nav-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .nav-button {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 8px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9em;
+      transition: all 0.3s ease;
+    }
+
+    .nav-button:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .nav-button.active {
+      background: white;
+      color: #667eea;
+      font-weight: bold;
+    }
+
+    .container {
+      display: flex;
+      height: calc(100vh - 60px);
+    }
+
+    .sidebar {
+      width: 300px;
+      background: #0f3460;
+      padding: 20px;
+      overflow-y: auto;
+      border-right: 2px solid #2a4365;
+    }
+
+    .stat-card {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      border-left: 4px solid;
+    }
+
+    .stat-card.healthy { border-left-color: #4CAF50; }
+    .stat-card.warning { border-left-color: #FF9800; }
+    .stat-card.critical { border-left-color: #F44336; }
+
+    .stat-number {
+      font-size: 2.5em;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .stat-label {
+      color: #b0b0b0;
+      font-size: 0.85em;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .server-list {
+      margin-top: 20px;
+    }
+
+    .server-item {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .server-name {
+      font-weight: 500;
+    }
+
+    .server-status {
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 0.75em;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .server-status.healthy {
+      background: #4CAF50;
+      color: white;
+    }
+
+    .server-status.unhealthy {
+      background: #FF9800;
+      color: white;
+    }
+
+    .server-status.unreachable {
+      background: #F44336;
+      color: white;
+    }
+
+    .main-content {
+      flex: 1;
+      position: relative;
+    }
+
+    .view-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: none;
+    }
+
+    .view-container.active {
+      display: block;
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    .connection-status {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(15, 52, 96, 0.95);
+      padding: 15px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 1000;
+    }
+
+    .status-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    .status-dot.connected {
+      background: #4CAF50;
+    }
+
+    .status-dot.disconnected {
+      background: #F44336;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .quick-actions {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .quick-action-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9em;
+      margin-bottom: 10px;
+      transition: all 0.3s ease;
+    }
+
+    .quick-action-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .refresh-indicator {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 8px 15px;
+      border-radius: 6px;
+      font-size: 0.85em;
+      z-index: 100;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>
+      <span>🔍</span>
+      MCP Unified Inspector
+      <span style="font-size: 0.6em; opacity: 0.8;">Dashboard + Inspector Integration</span>
+    </h1>
+    <div class="nav-buttons">
+      <button class="nav-button active" onclick="switchView('inspector')">MCP Inspector</button>
+      <button class="nav-button" onclick="switchView('dashboard')">Enhanced Dashboard</button>
+      <button class="nav-button" onclick="switchView('original')">Original Dashboard</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <h3 style="margin-bottom: 15px;">System Overview</h3>
+
+      <div class="stat-card healthy">
+        <div class="stat-number" id="stat-healthy">0</div>
+        <div class="stat-label">Healthy Servers</div>
+      </div>
+
+      <div class="stat-card warning">
+        <div class="stat-number" id="stat-unhealthy">0</div>
+        <div class="stat-label">Degraded Servers</div>
+      </div>
+
+      <div class="stat-card critical">
+        <div class="stat-number" id="stat-unreachable">0</div>
+        <div class="stat-label">Unreachable Servers</div>
+      </div>
+
+      <div class="server-list">
+        <h4 style="margin-bottom: 10px;">Server Status</h4>
+        <div id="server-list"></div>
+      </div>
+
+      <div class="quick-actions">
+        <h4 style="margin-bottom: 10px;">Quick Actions</h4>
+        <button class="quick-action-btn" onclick="refreshData()">🔄 Refresh All Data</button>
+        <button class="quick-action-btn" onclick="openInNewTab('inspector')">🔗 Open Inspector</button>
+        <button class="quick-action-btn" onclick="openInNewTab('dashboard')">🔗 Open Dashboard</button>
+      </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="main-content">
+      <div class="refresh-indicator" id="refresh-indicator" style="display: none;">
+        Updating...
+      </div>
+
+      <!-- MCP Inspector View -->
+      <div class="view-container active" id="view-inspector">
+        <iframe src="http://localhost:6274/?MCP_PROXY_AUTH_TOKEN=8da7833da35869ec27ce9eb13a1b4926d98a6802303e60cfb6185780ba6eb74c#resources"></iframe>
+      </div>
+
+      <!-- Enhanced Dashboard View -->
+      <div class="view-container" id="view-dashboard">
+        <iframe src="http://localhost:65031/enhanced"></iframe>
+      </div>
+
+      <!-- Original Dashboard View -->
+      <div class="view-container" id="view-original">
+        <iframe src="http://localhost:65031"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <!-- Connection Status -->
+  <div class="connection-status">
+    <div class="status-dot" id="connection-dot"></div>
+    <span id="connection-text">Connecting...</span>
+    <span style="margin-left: 10px; opacity: 0.7;" id="last-update">Last update: Never</span>
+  </div>
+
+  <script>
+    const API_URL = 'http://localhost:65031';
+    const WS_URL = 'ws://localhost:65030';
+    let ws = null;
+    let currentView = 'inspector';
+
+    // Switch between views
+    function switchView(view) {
+      // Update buttons
+      document.querySelectorAll('.nav-button').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      event.target.classList.add('active');
+
+      // Update views
+      document.querySelectorAll('.view-container').forEach(container => {
+        container.classList.remove('active');
+      });
+      document.getElementById(`view-${view}`).classList.add('active');
+
+      currentView = view;
+    }
+
+    // Open view in new tab
+    function openInNewTab(view) {
+      const urls = {
+        'inspector': 'http://localhost:6274/?MCP_PROXY_AUTH_TOKEN=8da7833da35869ec27ce9eb13a1b4926d98a6802303e60cfb6185780ba6eb74c#resources',
+        'dashboard': 'http://localhost:65031/enhanced',
+        'original': 'http://localhost:65031'
+      };
+      window.open(urls[view], '_blank');
+    }
+
+    // Connect to WebSocket
+    function connectWebSocket() {
+      ws = new WebSocket(WS_URL);
+
+      ws.onopen = () => {
+        console.log('Connected to MCP Dashboard WebSocket');
+        updateConnectionStatus(true);
+      };
+
+      ws.onmessage = (event) => {
+        const message = JSON.parse(event.data);
+        if (message.type === 'health-update') {
+          updateSidebar(message.data);
+        }
+      };
+
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        updateConnectionStatus(false);
+      };
+
+      ws.onclose = () => {
+        console.log('Disconnected from WebSocket');
+        updateConnectionStatus(false);
+        setTimeout(connectWebSocket, 5000);
+      };
+    }
+
+    // Update connection status
+    function updateConnectionStatus(connected) {
+      const dot = document.getElementById('connection-dot');
+      const text = document.getElementById('connection-text');
+
+      if (connected) {
+        dot.className = 'status-dot connected';
+        text.textContent = 'Connected';
+      } else {
+        dot.className = 'status-dot disconnected';
+        text.textContent = 'Disconnected';
+      }
+    }
+
+    // Update sidebar
+    function updateSidebar(data) {
+      if (!data.servers) return;
+
+      const stats = data.stats || calculateStats(data.servers);
+
+      // Update stat cards
+      document.getElementById('stat-healthy').textContent = stats.healthy;
+      document.getElementById('stat-unhealthy').textContent = stats.unhealthy;
+      document.getElementById('stat-unreachable').textContent = stats.unreachable;
+
+      // Update server list
+      const serverList = document.getElementById('server-list');
+      serverList.innerHTML = '';
+
+      data.servers.forEach(server => {
+        const serverItem = document.createElement('div');
+        serverItem.className = 'server-item';
+        serverItem.innerHTML = `
+          <span class="server-name">${server.name}</span>
+          <span class="server-status ${server.status}">${server.status}</span>
+        `;
+        serverList.appendChild(serverItem);
+      });
+
+      // Update last update time
+      document.getElementById('last-update').textContent =
+        `Last update: ${new Date().toLocaleTimeString()}`;
+    }
+
+    // Calculate stats
+    function calculateStats(servers) {
+      return {
+        total: servers.length,
+        healthy: servers.filter(s => s.status === 'healthy').length,
+        unhealthy: servers.filter(s => s.status === 'unhealthy').length,
+        unreachable: servers.filter(s => s.status === 'unreachable').length
+      };
+    }
+
+    // Refresh data
+    async function refreshData() {
+      const indicator = document.getElementById('refresh-indicator');
+      indicator.style.display = 'block';
+
+      try {
+        const response = await fetch(`${API_URL}/api/health`);
+        const data = await response.json();
+        updateSidebar(data);
+      } catch (error) {
+        console.error('Failed to refresh:', error);
+      }
+
+      setTimeout(() => {
+        indicator.style.display = 'none';
+      }, 1000);
+    }
+
+    // Initialize
+    window.addEventListener('load', () => {
+      connectWebSocket();
+      refreshData();
+
+      // Auto-refresh every 30 seconds
+      setInterval(refreshData, 30000);
+    });
+  </script>
+</body>
+</html>

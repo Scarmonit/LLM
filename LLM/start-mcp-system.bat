@@ -40,6 +40,11 @@ echo [%TIME%] Starting MCP Proxy Integration (port 65032)...
 start "MCP Proxy Integration" /MIN cmd /c "node "%MCP_DIR%\mcp-proxy-auth-integration.js" > "%LOG_DIR%\proxy-integration.log" 2>&1"
 timeout /t 2 /nobreak >nul
 
+REM Start Unified Inspector (combines all dashboards)
+echo [%TIME%] Starting Unified Inspector (port 65033)...
+start "MCP Unified Inspector" /MIN cmd /c "node "%SCRIPT_DIR%serve-unified-inspector.js" > "%LOG_DIR%\unified-inspector.log" 2>&1"
+timeout /t 2 /nobreak >nul
+
 echo.
 echo ================================================================================
 echo   Verifying Services
@@ -74,6 +79,13 @@ if %errorlevel% equ 0 (
     echo    [ERROR] Proxy integration server NOT listening on port 65032
 )
 
+netstat -an | findstr ":65033" >nul
+if %errorlevel% equ 0 (
+    echo    [OK] Unified inspector server listening on port 65033
+) else (
+    echo    [ERROR] Unified inspector server NOT listening on port 65033
+)
+
 echo.
 echo ================================================================================
 echo   Testing API Endpoints
@@ -103,14 +115,19 @@ echo ===========================================================================
 echo   System URLs
 echo ================================================================================
 echo.
+echo    🎯 MAIN INTERFACE:
+echo    Unified Inspector:  http://localhost:65033  [RECOMMENDED]
+echo.
+echo    📊 INDIVIDUAL DASHBOARDS:
 echo    Dashboard:          http://localhost:65031
 echo    Enhanced Dashboard: http://localhost:65031/enhanced
+echo    MCP Inspector:      http://localhost:6274?MCP_PROXY_AUTH_TOKEN=...
+echo.
+echo    🔌 API ENDPOINTS:
 echo    Health API:         http://localhost:65031/api/health
 echo    Metrics API:        http://localhost:65031/api/metrics
 echo    Proxy API:          http://localhost:65032/api/status?MCP_PROXY_AUTH_TOKEN=...
 echo    WebSocket:          ws://localhost:65030
-echo.
-echo    MCP Inspector:      http://localhost:6274
 echo.
 echo ================================================================================
 echo   Logs Location
