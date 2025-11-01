@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-
 /**
  * MCP Dashboard Server
  * Real-time health monitoring for all MCP servers
@@ -12,7 +11,6 @@
  *
  * @module mcp-dashboard-server
  */
-
 import { spawn } from 'child_process';
 import { WebSocketServer } from 'ws';
 import { createServer } from 'http';
@@ -34,366 +32,296 @@ const MCP_SERVERS = [
   {
     name: '1Password',
     path: join(__dirname, '1password-mcp-server.js'),
-    testTool: 'list_vaults',
-    testArgs: {},
-    color: '#0094F5',
+    command: 'list_items'
   },
   {
     name: 'Desktop Automation',
     path: join(__dirname, 'desktop-automation-mcp-server.js'),
-    testTool: 'browser_screenshot',
-    testArgs: { name: 'health-check' },
-    color: '#00C853',
+    command: 'list_applications'
   },
   {
     name: 'Kali',
     path: join(__dirname, 'kali-mcp-server.js'),
-    testTool: 'kali_nmap_scan',
-    testArgs: { target: '127.0.0.1', scanType: 'quick' },
-    color: '#557C9B',
+    command: 'list_tools'
   },
   {
     name: 'iPhone',
     path: join(__dirname, 'iphone-mcp-server.js'),
-    testTool: 'iphone_list_devices',
-    testArgs: {},
-    color: '#999999',
+    command: 'list_apps'
   },
   {
     name: 'YouTube',
     path: join(__dirname, 'youtube-mcp-server.js'),
-    testTool: 'youtube_search',
-    testArgs: { query: 'test', maxResults: 1 },
-    color: '#FF0000',
+    command: 'search_videos'
   },
   {
     name: 'MCP Doctor',
     path: join(__dirname, 'mcp-doctor-server.js'),
-    testTool: 'health_check',
-    testArgs: {},
-    color: '#4CAF50',
+    command: 'diagnose'
   },
   {
     name: 'AWS CLI',
     path: join(__dirname, 'aws-cli-mcp-server.js'),
-    testTool: 'aws_execute',
-    testArgs: { service: 'sts', command: 'get-caller-identity', args: [] },
-    color: '#FF9900',
+    command: 'list_ec2_instances'
   },
   {
     name: 'Terraform',
     path: join(__dirname, 'terraform-mcp-server.js'),
-    testTool: 'terraform_validate',
-    testArgs: { workingDir: '.', json: true },
-    color: '#7B42BC',
-  },
+    command: 'list_resources'
+  }
 ];
 
+let wss;
+let connectedClients = new Set();
+let healthData = { servers: [] };
+
 /**
- * MCP Dashboard Server Class
+ * Check health of a single MCP server
+ * @param {Object} server - Server configuration
+ * @returns {Promise<Object>} Health status
  */
-class MCPDashboardServer {
-  constructor() {
-    this.healthData = [];
-    this.clients = new Set();
-    this.healthCheckTimer = null;
-  }
-
-  /**
-   * Check health of a single MCP server
-   */
-  async checkServerHealth(serverConfig) {
-    const startTime = Date.now();
-
-    try {
-      // Spawn MCP server process
-      const process = spawn('node', [serverConfig.path], {
-        stdio: ['pipe', 'pipe', 'pipe'],
+async function checkServerHealth(server) {
+  const startTime = Date.now();
+  
+  return new Promise((resolve) => {
+    const timeout = setTimeout(() => {
+      resolve({
+        name: server.name,
+        command: server.command,
+        status: 'unhealthy',
+        responseTime: null,
+        lastCheck: new Date().toISOString(),
+        error: 'Health check timeout (>5000ms)'
       });
+    }, 5000);
 
-      let stdout = '';
-      let stderr = '';
-      let responseReceived = false;
+    const child = spawn('node', [server.path], {
+      stdio: ['pipe', 'pipe', 'pipe']
+    });
 
-      // Set timeout for health check
-      const timeout = setTimeout(() => {
-        if (!responseReceived) {
-          process.kill();
-        }
-      }, 10000); // 10 second timeout
+    let stdout = '';
+    let stderr = '';
+    let hasResponded = false;
 
-      // Prepare MCP request
-      const mcpRequest = {
-        jsonrpc: '2.0',
-        id: 1,
-        method: 'tools/call',
-        params: {
-          name: serverConfig.testTool,
-          arguments: serverConfig.testArgs,
-        },
-      };
+    child.stdout.on('data', (data) => {
+      stdout += data.toString();
+    });
 
-      // Send request to MCP server
-      process.stdin.write(JSON.stringify(mcpRequest) + '\n');
-      process.stdin.end();
+    child.stderr.on('data', (data) => {
+      stderr += data.toString();
+    });
 
-      // Collect response
-      await new Promise((resolve, reject) => {
-        process.stdout.on('data', (data) => {
-          stdout += data.toString();
+    child.on('error', (error) => {
+      if (!hasResponded) {
+        hasResponded = true;
+        clearTimeout(timeout);
+        resolve({
+          name: server.name,
+          command: server.command,
+          status: 'unhealthy',
+          responseTime: Date.now() - startTime,
+          lastCheck: new Date().toISOString(),
+          error: `Failed to start: ${error.message}`
         });
+      }
+    });
 
-        process.stderr.on('data', (data) => {
-          stderr += data.toString();
-        });
-
-        process.on('close', (code) => {
-          clearTimeout(timeout);
-          responseReceived = true;
-
-          if (code !== 0 && code !== null) {
-            reject(new Error(`Process exited with code ${code}: ${stderr}`));
+    child.on('close', (code) => {
+      if (!hasResponded) {
+        hasResponded = true;
+        clearTimeout(timeout);
+        
+        const responseTime = Date.now() - startTime;
+        
+        // Try to parse JSON response
+        try {
+          const jsonMatch = stdout.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            const response = JSON.parse(jsonMatch[0]);
+            resolve({
+              name: server.name,
+              command: server.command,
+              status: 'healthy',
+              responseTime,
+              lastCheck: new Date().toISOString()
+            });
           } else {
-            resolve();
+            resolve({
+              name: server.name,
+              command: server.command,
+              status: 'unhealthy',
+              responseTime,
+              lastCheck: new Date().toISOString(),
+              error: 'No valid JSON response'
+            });
           }
-        });
-
-        process.on('error', (error) => {
-          clearTimeout(timeout);
-          responseReceived = true;
-          reject(error);
-        });
-      });
-
-      const responseTime = Date.now() - startTime;
-
-      // Parse MCP response
-      try {
-        const response = JSON.parse(stdout.trim().split('\n').pop());
-
-        if (response.error) {
-          return {
-            name: serverConfig.name,
+        } catch (parseError) {
+          resolve({
+            name: server.name,
+            command: server.command,
             status: 'unhealthy',
             responseTime,
-            lastChecked: new Date().toISOString(),
-            error: response.error.message || 'Unknown error',
-            toolsTested: [serverConfig.testTool],
-            color: serverConfig.color,
-          };
+            lastCheck: new Date().toISOString(),
+            error: `JSON parse error: ${parseError.message}`
+          });
         }
-
-        return {
-          name: serverConfig.name,
-          status: 'healthy',
-          responseTime,
-          lastChecked: new Date().toISOString(),
-          toolsTested: [serverConfig.testTool],
-          color: serverConfig.color,
-        };
-      } catch (parseError) {
-        // If can't parse JSON, but process succeeded, consider it healthy
-        return {
-          name: serverConfig.name,
-          status: 'healthy',
-          responseTime,
-          lastChecked: new Date().toISOString(),
-          toolsTested: [serverConfig.testTool],
-          color: serverConfig.color,
-        };
-      }
-    } catch (error) {
-      const responseTime = Date.now() - startTime;
-      return {
-        name: serverConfig.name,
-        status: 'unreachable',
-        responseTime,
-        lastChecked: new Date().toISOString(),
-        error: error.message,
-        toolsTested: [serverConfig.testTool],
-        color: serverConfig.color,
-      };
-    }
-  }
-
-  /**
-   * Check health of all MCP servers
-   */
-  async checkAllServers() {
-    console.log('[MCP Dashboard] Running health checks...');
-
-    const healthPromises = MCP_SERVERS.map((server) =>
-      this.checkServerHealth(server)
-    );
-
-    this.healthData = await Promise.all(healthPromises);
-
-    // Calculate overall health
-    const healthyCount = this.healthData.filter((s) => s.status === 'healthy').length;
-    const totalCount = this.healthData.length;
-
-    let overallHealth = 'all-healthy';
-    if (healthyCount === 0) {
-      overallHealth = 'critical';
-    } else if (healthyCount < totalCount) {
-      overallHealth = 'degraded';
-    }
-
-    const dashboardState = {
-      servers: this.healthData,
-      lastUpdate: new Date().toISOString(),
-      overallHealth,
-      stats: {
-        total: totalCount,
-        healthy: healthyCount,
-        unhealthy: this.healthData.filter((s) => s.status === 'unhealthy').length,
-        unreachable: this.healthData.filter((s) => s.status === 'unreachable').length,
-      },
-    };
-
-    console.log(`[MCP Dashboard] Health check complete: ${healthyCount}/${totalCount} healthy`);
-
-    // Broadcast to all connected WebSocket clients
-    this.broadcast(dashboardState);
-
-    return dashboardState;
-  }
-
-  /**
-   * Broadcast message to all WebSocket clients
-   */
-  broadcast(data) {
-    const message = JSON.stringify({
-      type: 'health-update',
-      data,
-    });
-
-    this.clients.forEach((client) => {
-      if (client.readyState === 1) { // WebSocket.OPEN
-        client.send(message);
-      }
-    });
-  }
-
-  /**
-   * Start WebSocket server
-   */
-  startWebSocketServer() {
-    const wss = new WebSocketServer({ port: WS_PORT });
-
-    wss.on('connection', (ws) => {
-      console.log('[MCP Dashboard] WebSocket client connected');
-      this.clients.add(ws);
-
-      // Send current health data immediately
-      if (this.healthData.length > 0) {
-        ws.send(JSON.stringify({
-          type: 'health-update',
-          data: {
-            servers: this.healthData,
-            lastUpdate: new Date().toISOString(),
-          },
-        }));
-      }
-
-      ws.on('close', () => {
-        console.log('[MCP Dashboard] WebSocket client disconnected');
-        this.clients.delete(ws);
-      });
-
-      ws.on('error', (error) => {
-        console.error('[MCP Dashboard] WebSocket error:', error.message);
-        this.clients.delete(ws);
-      });
-    });
-
-    console.log(`[MCP Dashboard] WebSocket server running on ws://localhost:${WS_PORT}`);
-  }
-
-  /**
-   * Start HTTP server for dashboard
-   */
-  startHTTPServer() {
-    const server = createServer(async (req, res) => {
-      if (req.url === '/' || req.url === '/index.html') {
-        try {
-          const html = await readFile(join(__dirname, 'mcp-dashboard.html'), 'utf-8');
-          res.writeHead(200, { 'Content-Type': 'text/html' });
-          res.end(html);
-        } catch (error) {
-          res.writeHead(404);
-          res.end('Dashboard not found');
-        }
-      } else if (req.url === '/api/health') {
-        // REST API endpoint for current health
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({
-          servers: this.healthData,
-          lastUpdate: new Date().toISOString(),
-        }));
-      } else {
-        res.writeHead(404);
-        res.end('Not found');
       }
     });
 
-    server.listen(HTTP_PORT, () => {
-      console.log(`[MCP Dashboard] HTTP server running on http://localhost:${HTTP_PORT}`);
-      console.log(`[MCP Dashboard] Open http://localhost:${HTTP_PORT} in your browser`);
-    });
-  }
-
-  /**
-   * Start dashboard server
-   */
-  async start() {
-    console.log('[MCP Dashboard] Starting MCP Dashboard Server...');
-
-    // Start WebSocket server
-    this.startWebSocketServer();
-
-    // Start HTTP server
-    this.startHTTPServer();
-
-    // Run initial health check
-    await this.checkAllServers();
-
-    // Schedule periodic health checks
-    this.healthCheckTimer = setInterval(() => {
-      this.checkAllServers().catch((error) => {
-        console.error('[MCP Dashboard] Health check error:', error.message);
-      });
-    }, HEALTH_CHECK_INTERVAL);
-
-    console.log('[MCP Dashboard] Dashboard server started successfully');
-  }
-
-  /**
-   * Stop dashboard server
-   */
-  stop() {
-    if (this.healthCheckTimer) {
-      clearInterval(this.healthCheckTimer);
-    }
-    this.clients.forEach((client) => client.close());
-    console.log('[MCP Dashboard] Dashboard server stopped');
-  }
-}
-
-// Start server if run directly
-if (import.meta.url === `file://${process.argv[1]}`) {
-  const dashboard = new MCPDashboardServer();
-  dashboard.start().catch((error) => {
-    console.error('[MCP Dashboard] Failed to start:', error.message);
-    process.exit(1);
-  });
-
-  // Handle graceful shutdown
-  process.on('SIGINT', () => {
-    console.log('\n[MCP Dashboard] Shutting down...');
-    dashboard.stop();
-    process.exit(0);
+    // Send initialization and command
+    setTimeout(() => {
+      try {
+        child.stdin.write(JSON.stringify({
+          jsonrpc: '2.0',
+          method: 'initialize',
+          params: {},
+          id: 1
+        }) + '\n');
+        
+        child.stdin.write(JSON.stringify({
+          jsonrpc: '2.0',
+          method: 'tools/list',
+          params: {},
+          id: 2
+        }) + '\n');
+        
+        child.stdin.end();
+      } catch (err) {
+        console.error(`Error writing to ${server.name}:`, err);
+      }
+    }, 100);
   });
 }
 
-export { MCPDashboardServer };
+/**
+ * Check health of all MCP servers
+ */
+async function checkAllServers() {
+  console.log('\n=== Starting health check ===');
+  const results = await Promise.all(
+    MCP_SERVERS.map(server => checkServerHealth(server))
+  );
+  
+  healthData = { servers: results };
+  
+  // Log summary
+  const healthy = results.filter(r => r.status === 'healthy').length;
+  const unhealthy = results.filter(r => r.status === 'unhealthy').length;
+  console.log(`Health Check Complete: ${healthy} healthy, ${unhealthy} unhealthy`);
+  
+  // Broadcast to all connected clients
+  broadcastHealthData();
+}
+
+/**
+ * Broadcast health data to all connected WebSocket clients
+ */
+function broadcastHealthData() {
+  const data = JSON.stringify(healthData);
+  connectedClients.forEach(client => {
+    if (client.readyState === 1) { // WebSocket.OPEN
+      try {
+        client.send(data);
+      } catch (err) {
+        console.error('Error sending to client:', err);
+      }
+    }
+  });
+}
+
+/**
+ * Initialize WebSocket Server
+ */
+function initWebSocketServer() {
+  wss = new WebSocketServer({ port: WS_PORT });
+  
+  wss.on('connection', (ws) => {
+    console.log('New WebSocket client connected');
+    connectedClients.add(ws);
+    
+    // Send current health data immediately
+    if (healthData.servers.length > 0) {
+      ws.send(JSON.stringify(healthData));
+    }
+    
+    ws.on('close', () => {
+      console.log('WebSocket client disconnected');
+      connectedClients.delete(ws);
+    });
+    
+    ws.on('error', (error) => {
+      console.error('WebSocket error:', error);
+      connectedClients.delete(ws);
+    });
+  });
+  
+  console.log(`WebSocket server listening on port ${WS_PORT}`);
+}
+
+/**
+ * Initialize HTTP Server for dashboard
+ */
+async function initHttpServer() {
+  const server = createServer(async (req, res) => {
+    if (req.url === '/' || req.url === '/dashboard') {
+      try {
+        const dashboardPath = join(__dirname, 'mcp-dashboard.html');
+        const html = await readFile(dashboardPath, 'utf-8');
+        res.writeHead(200, { 'Content-Type': 'text/html' });
+        res.end(html);
+      } catch (err) {
+        console.error('Error serving dashboard:', err);
+        res.writeHead(500, { 'Content-Type': 'text/plain' });
+        res.end('Error loading dashboard');
+      }
+    } else if (req.url === '/health') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(healthData));
+    } else {
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end('Not Found');
+    }
+  });
+  
+  server.listen(HTTP_PORT, () => {
+    console.log(`HTTP server listening on port ${HTTP_PORT}`);
+    console.log(`Dashboard: http://localhost:${HTTP_PORT}/`);
+  });
+}
+
+/**
+ * Main startup function
+ */
+async function main() {
+  console.log('🚀 Starting MCP Dashboard Server...');
+  console.log(`Monitoring ${MCP_SERVERS.length} MCP servers`);
+  
+  // Initialize servers
+  initWebSocketServer();
+  await initHttpServer();
+  
+  // Run initial health check
+  await checkAllServers();
+  
+  // Schedule periodic health checks
+  setInterval(checkAllServers, HEALTH_CHECK_INTERVAL);
+  
+  console.log(`\n✅ Dashboard ready!`);
+  console.log(`📊 Dashboard: http://localhost:${HTTP_PORT}/`);
+  console.log(`🔌 WebSocket: ws://localhost:${WS_PORT}`);
+}
+
+// Handle process termination
+process.on('SIGINT', () => {
+  console.log('\n\n🛑 Shutting down MCP Dashboard Server...');
+  if (wss) {
+    wss.close();
+  }
+  process.exit(0);
+});
+
+// Start the server
+main().catch(err => {
+  console.error('Fatal error starting server:', err);
+  process.exit(1);
+});
