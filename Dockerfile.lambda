@@ -1,0 +1,18 @@
+# AWS Lambda Python 3.11 container for LM Studio agent
+FROM public.ecr.aws/lambda/python:3.11
+
+# Install system dependencies for Python packages
+RUN yum install -y gcc g++ make
+
+# Copy requirements
+COPY requirements-lambda.txt ${LAMBDA_TASK_ROOT}/
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r ${LAMBDA_TASK_ROOT}/requirements-lambda.txt
+
+# Copy agent code
+COPY src/agents/lm-studio-agent.py ${LAMBDA_TASK_ROOT}/
+COPY src/microservices/aws-lambda-handler.py ${LAMBDA_TASK_ROOT}/
+
+# Set the CMD to your handler
+CMD ["aws-lambda-handler.lambda_handler"]

@@ -1,0 +1,14 @@
+name = "lm-studio-lfm2-agent"
+main = "src/microservices/cloudflare-worker.ts"
+compatibility_date = "2024-01-01"
+
+[env.production]
+vars = { }
+
+[[env.production.kv_namespaces]]
+binding = "AGENT_CACHE"
+id = "" # Add your KV namespace ID
+
+[env.production.vars]
+LM_STUDIO_API_URL = "https://api.lmstudio.ai" # Your LM Studio API endpoint
+AGENT_AUTH_TOKEN = "" # Your authentication token (use wrangler secret put)
