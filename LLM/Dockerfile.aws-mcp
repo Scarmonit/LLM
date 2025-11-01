@@ -1,0 +1,36 @@
+# AWS CLI MCP Server - Docker Image
+# Provides AWS CLI capabilities via Model Context Protocol
+
+FROM node:18-alpine
+
+# Install AWS CLI v2
+RUN apk add --no-cache \
+    python3 \
+    py3-pip \
+    aws-cli \
+    && rm -rf /var/cache/apk/*
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files and install dependencies
+COPY package.json ./
+RUN npm install --omit=dev
+
+# Copy application code and utilities
+COPY src/mcp/aws-cli-mcp-server.js ./src/mcp/aws-cli-mcp-server.js
+COPY src/utils/logger.js ./src/utils/logger.js
+
+# Create AWS credentials directory
+RUN mkdir -p /root/.aws
+
+# Set environment variables
+ENV NODE_ENV=production \
+    AWS_REGION=us-east-1
+
+# Expose no ports (stdio-based MCP server)
+# Volume for AWS credentials
+VOLUME ["/root/.aws"]
+
+# Run the AWS CLI MCP server
+CMD ["node", "src/mcp/aws-cli-mcp-server.js"]
