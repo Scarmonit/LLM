@@ -13,6 +13,13 @@ import net from 'net';
  * Provides security scanning tools via Model Context Protocol
  */
 class KaliMCPServer {
+  // Configuration constants
+  static HTTP_TIMEOUT_MS = 10000;
+  static MAX_REDIRECTS = 3;
+  static NMAP_SCAN_TIMEOUT_MS = 60000;
+  static HOST_DISCOVERY_TIMEOUT_MS = 120000;
+  static MAX_HTML_ANALYSIS_LENGTH = 1000000; // 1MB limit for HTML analysis
+
   constructor() {
     this.server = new Server(
       {
@@ -26,9 +33,9 @@ class KaliMCPServer {
       }
     );
 
-    // Security configuration
-    this.httpTimeoutMs = 10000;
-    this.maxRedirects = 3; // will validate each hop
+    // Security configuration (use class constants)
+    this.httpTimeoutMs = KaliMCPServer.HTTP_TIMEOUT_MS;
+    this.maxRedirects = KaliMCPServer.MAX_REDIRECTS;
 
     this.setupHandlers();
     this.setupErrorHandling();
@@ -124,8 +131,12 @@ class KaliMCPServer {
   }
 
   /**
-   * Perform Nmap port scan
+   * Perform Nmap port scan with SSRF protection
    * SECURITY: Fixed Issue #4 - Added DNS validation for SSRF protection
+   * @param {Object} params - Parameters object
+   * @param {string} params.target - Target IP address or domain name
+   * @param {string} [params.scanType='quick'] - Scan type (quick, stealth, service)
+   * @returns {Promise<Object>} MCP response with scan results
    */
   async nmapScan({ target, scanType = 'quick' }) {
     // Input validation with strict IP/CIDR checks
@@ -146,29 +157,15 @@ class KaliMCPServer {
 
     // Build nmap arguments using tool registry
     const output = await this.executeNmapScan(target, scanType);
-    return {
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify(
-            {
-              tool: 'kali_nmap_scan',
-              target,
-              scanType,
-              output,
-              timestamp: new Date().toISOString(),
-            },
-            null,
-            2
-          ),
-        },
-      ],
-    };
+    return this.formatResponse('kali_nmap_scan', { target, scanType, output });
   }
 
   /**
    * Execute nmap scan with specified type
    * SECURITY: Fixed Issue #4 - Refactored switch to tool registry pattern
+   * @param {string} target - Target IP or domain
+   * @param {string} scanType - Scan type (quick, stealth, service)
+   * @returns {Promise<string>} Nmap command output
    */
   async executeNmapScan(target, scanType) {
     const scanConfigs = {
@@ -182,12 +179,15 @@ class KaliMCPServer {
       throw new Error(`Invalid scan type: ${scanType}`);
     }
 
-    return await this.executeCommand('nmap', args, 60000);
+    return await this.executeCommand('nmap', args, KaliMCPServer.NMAP_SCAN_TIMEOUT_MS);
   }
 
   /**
-   * Detect web technologies
+   * Detect web technologies from URL with SSRF protection
    * SECURITY: Implements Issue #4 Action 1 (DNS validation) and Action 2 (redirect validation)
+   * @param {Object} params - Parameters object
+   * @param {string} params.url - Full URL with protocol (http:// or https://)
+   * @returns {Promise<Object>} MCP response with detected technologies
    */
   async techDetect({ url }) {
     // Validate and parse URL
@@ -228,7 +228,8 @@ class KaliMCPServer {
         if (err.response) {
           response = err.response;
         } else {
-          throw new Error(`Failed to fetch URL: ${err.message}`);
+          // Sanitize error message - don't expose internal details
+          throw new Error('Failed to fetch URL: Network or timeout error');
         }
       }
 
@@ -275,8 +276,15 @@ class KaliMCPServer {
       });
     }
 
-    // Basic content analysis
-    const html = typeof response.data === 'string' ? response.data.toLowerCase() : '';
+    // Basic content analysis with size limit for performance
+    let html = '';
+    if (typeof response.data === 'string') {
+      const truncated = response.data.length > KaliMCPServer.MAX_HTML_ANALYSIS_LENGTH
+        ? response.data.substring(0, KaliMCPServer.MAX_HTML_ANALYSIS_LENGTH)
+        : response.data;
+      html = truncated.toLowerCase();
+    }
+
     if (html.includes('react')) {
       technologies.push({ name: 'React', category: 'JavaScript Framework', confidence: 'medium' });
     }
@@ -290,30 +298,21 @@ class KaliMCPServer {
       technologies.push({ name: 'WordPress', category: 'CMS', confidence: 'high' });
     }
 
-    return {
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify(
-            {
-              tool: 'kali_tech_detect',
-              url: currentUrl,
-              technologies,
-              timestamp: new Date().toISOString(),
-              security: {
-                references: ['Issue #4: Action 1 (DNS validation)', 'Issue #4: Action 2 (redirect validation)'],
-              },
-            },
-            null,
-            2
-          ),
-        },
-      ],
-    };
+    return this.formatResponse('kali_tech_detect', {
+      url: currentUrl,
+      technologies,
+      security: {
+        references: ['Issue #4: Action 1 (DNS validation)', 'Issue #4: Action 2 (redirect validation)'],
+      },
+    });
   }
 
   /**
    * Host discovery scan
+   * Scans a network range for active hosts
+   * @param {Object} params - Parameters object
+   * @param {string} params.network - Network in CIDR notation (e.g., 192.168.1.0/24)
+   * @returns {Promise<Object>} MCP response with discovered hosts
    */
   async hostDiscovery({ network }) {
     // Validate CIDR notation
@@ -321,16 +320,25 @@ class KaliMCPServer {
       throw new Error('Invalid CIDR notation');
     }
 
-    const output = await this.executeCommand('nmap', ['-sn', network], 120000);
+    const output = await this.executeCommand('nmap', ['-sn', network], KaliMCPServer.HOST_DISCOVERY_TIMEOUT_MS);
+    return this.formatResponse('kali_host_discovery', { network, output });
+  }
+
+  /**
+   * Format MCP response with standard structure
+   * @param {string} tool - Tool name
+   * @param {Object} data - Response data
+   * @returns {Object} Formatted MCP response
+   */
+  formatResponse(tool, data) {
     return {
       content: [
         {
           type: 'text',
           text: JSON.stringify(
             {
-              tool: 'kali_host_discovery',
-              network,
-              output,
+              tool,
+              ...data,
               timestamp: new Date().toISOString(),
             },
             null,
@@ -342,8 +350,12 @@ class KaliMCPServer {
   }
 
   /**
-   * Execute command with timeout
+   * Execute command with timeout and forced termination
    * SECURITY: Fixed Issue #4 Item 7 - Use SIGKILL for timeout
+   * @param {string} command - Command to execute
+   * @param {string[]} args - Command arguments
+   * @param {number} timeout - Timeout in milliseconds
+   * @returns {Promise<string>} Command output
    */
   executeCommand(command, args, timeout) {
     return new Promise((resolve, reject) => {
@@ -365,18 +377,22 @@ class KaliMCPServer {
         if (code === 0) {
           resolve(output);
         } else {
-          reject(new Error(`Command exited with code ${code}: ${errorOutput}`));
+          // Sanitize error - don't expose internal command output
+          reject(new Error(`Command exited with code ${code}`));
         }
       });
       proc.on('error', (error) => {
         clearTimeout(timer);
-        reject(new Error(`Failed to execute command: ${error.message}`));
+        // Sanitize error - don't expose system details
+        reject(new Error('Failed to execute command: Command not found or permission denied'));
       });
     });
   }
 
   /**
-   * Validate target format
+   * Validate target format (IP or domain)
+   * @param {string} target - Target to validate
+   * @returns {boolean} True if target is valid IP or domain
    */
   isValidTarget(target) {
     return this.isValidIPAddress(target) || this.isValidDomain(target);
@@ -385,6 +401,8 @@ class KaliMCPServer {
   /**
    * Validate IPv4 address with proper octet checking
    * SECURITY: Fixed Issue #4 Item 3 - Strict IP validation
+   * @param {string} ip - IPv4 address to validate
+   * @returns {boolean} True if valid IPv4 address
    */
   isValidIPAddress(ip) {
     const octets = ip.split('.');
@@ -396,7 +414,9 @@ class KaliMCPServer {
   }
 
   /**
-   * Validate domain name
+   * Validate domain name format
+   * @param {string} domain - Domain name to validate
+   * @returns {boolean} True if valid domain format
    */
   isValidDomain(domain) {
     const domainPattern = /^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$/i;
@@ -406,6 +426,8 @@ class KaliMCPServer {
   /**
    * Validate CIDR notation with proper IP and mask validation
    * SECURITY: Fixed Issue #4 Item 4 - Strict CIDR validation
+   * @param {string} cidr - CIDR notation to validate (e.g., 192.168.1.0/24)
+   * @returns {boolean} True if valid CIDR notation
    */
   isValidCIDR(cidr) {
     const [ip, mask] = cidr.split('/');
@@ -416,8 +438,10 @@ class KaliMCPServer {
   }
 
   /**
-   * Check if IP is in private range (SSRF protection)
+   * Check if IPv4 is in private range (SSRF protection)
    * SECURITY: Fixed Issue #4 Item 2 - Added cloud metadata and 0.0.0.0 checks
+   * @param {string} ip - IPv4 address to check
+   * @returns {boolean} True if IP is private/local
    */
   isPrivateIPString(ip) {
     // Cloud metadata endpoint (AWS, GCP, Azure)
@@ -437,13 +461,39 @@ class KaliMCPServer {
     return privateRanges.some((pattern) => pattern.test(ip));
   }
 
+  /**
+   * Check if hostname is localhost
+   * @param {string} hostname - Hostname to check
+   * @returns {boolean} True if hostname is localhost variant
+   */
   isLocalhost(hostname) {
     return /^localhost$/i.test(hostname);
   }
 
   /**
-   * Action 1: Resolve all A/AAAA records and block private/bogon ranges.
-   * Also blocks IPv6 localhost and RFC4193 (fc00::/7) and link-local fe80::/10.
+   * Check if IPv6 address is private or local
+   * @param {string} ip - IPv6 address
+   * @returns {boolean} True if IPv6 is private/local
+   */
+  isPrivateIPv6(ip) {
+    const lower = ip.toLowerCase();
+    return (
+      lower === '::1' || // loopback
+      lower.startsWith('fc') || // unique local fc00::/7
+      lower.startsWith('fd') || // unique local fd00::/7
+      lower.startsWith('fe80:') || // link-local
+      lower.startsWith('fe80::') || // link-local alternate
+      lower.startsWith('ff') // multicast
+    );
+  }
+
+  /**
+   * Validate DNS resolution and block private/local IPs (SSRF protection)
+   * Action 1: Resolve all A/AAAA records and block private/bogon ranges
+   * Also blocks IPv6 localhost and RFC4193 (fc00::/7) and link-local fe80::/10
+   * @param {string} hostname - Hostname to resolve and validate
+   * @returns {Promise<boolean>} True if validation passes
+   * @throws {Error} If DNS resolution fails or resolves to private IP
    */
   async validateDnsResolution(hostname) {
     // Block explicit localhost names early
@@ -471,13 +521,8 @@ class KaliMCPServer {
     // Validate each IP is public
     for (const ip of addresses) {
       if (net.isIP(ip) === 6) {
-        // IPv6 checks
-        const lower = ip.toLowerCase();
-        if (
-          lower === '::1' || // loopback
-          lower.startsWith('fc') || lower.startsWith('fd') || // unique local (fc00::/7)
-          lower.startsWith('fe80:') // link-local
-        ) {
+        // IPv6 checks using helper method
+        if (this.isPrivateIPv6(ip)) {
           throw new Error('Access to private or local IPv6 address is not allowed');
         }
       } else {
