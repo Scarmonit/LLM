@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MCP Dashboard - Real-time Health Monitoring</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #333;
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    header {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      margin-bottom: 30px;
+    }
+
+    h1 {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      color: #666;
+      font-size: 1.1em;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    .stat-number {
+      font-size: 3em;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .stat-label {
+      color: #666;
+      font-size: 0.9em;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .stat-card.healthy .stat-number { color: #4CAF50; }
+    .stat-card.unhealthy .stat-number { color: #FF9800; }
+    .stat-card.unreachable .stat-number { color: #F44336; }
+    .stat-card.total .stat-number { color: #2196F3; }
+
+    .servers-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 20px;
+    }
+
+    .server-card {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s, box-shadow 0.2s;
+      border-left: 5px solid;
+    }
+
+    .server-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .server-card.healthy { border-left-color: #4CAF50; }
+    .server-card.unhealthy { border-left-color: #FF9800; }
+    .server-card.unreachable { border-left-color: #F44336; }
+
+    .server-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .server-name {
+      font-size: 1.4em;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .status-badge {
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 0.75em;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .status-badge.healthy {
+      background: #E8F5E9;
+      color: #2E7D32;
+    }
+
+    .status-badge.unhealthy {
+      background: #FFF3E0;
+      color: #E65100;
+    }
+
+    .status-badge.unreachable {
+      background: #FFEBEE;
+      color: #C62828;
+    }
+
+    .server-details {
+      display: grid;
+      gap: 10px;
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .detail-row:last-child {
+      border-bottom: none;
+    }
+
+    .detail-label {
+      color: #666;
+      font-size: 0.9em;
+    }
+
+    .detail-value {
+      font-weight: 600;
+      color: #333;
+    }
+
+    .error-message {
+      background: #FFEBEE;
+      color: #C62828;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 0.9em;
+      margin-top: 10px;
+      word-wrap: break-word;
+    }
+
+    .connection-status {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: white;
+      padding: 15px 20px;
+      border-radius: 30px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.9em;
+    }
+
+    .connection-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    .connection-dot.connected {
+      background: #4CAF50;
+    }
+
+    .connection-dot.disconnected {
+      background: #F44336;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .last-update {
+      text-align: center;
+      color: white;
+      margin-top: 20px;
+      font-size: 0.9em;
+    }
+
+    @media (max-width: 768px) {
+      .servers-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🎯 MCP Dashboard</h1>
+      <p class="subtitle">Real-time health monitoring for all Model Context Protocol servers</p>
+    </header>
+
+    <div class="stats-grid" id="stats">
+      <div class="stat-card total">
+        <div class="stat-number" id="stat-total">0</div>
+        <div class="stat-label">Total Servers</div>
+      </div>
+      <div class="stat-card healthy">
+        <div class="stat-number" id="stat-healthy">0</div>
+        <div class="stat-label">Healthy</div>
+      </div>
+      <div class="stat-card unhealthy">
+        <div class="stat-number" id="stat-unhealthy">0</div>
+        <div class="stat-label">Degraded</div>
+      </div>
+      <div class="stat-card unreachable">
+        <div class="stat-number" id="stat-unreachable">0</div>
+        <div class="stat-label">Unreachable</div>
+      </div>
+    </div>
+
+    <div class="servers-grid" id="servers"></div>
+
+    <div class="last-update" id="last-update">
+      Waiting for data...
+    </div>
+  </div>
+
+  <div class="connection-status">
+    <div class="connection-dot" id="connection-dot"></div>
+    <span id="connection-text">Connecting...</span>
+  </div>
+
+  <script>
+    let ws = null;
+    let reconnectTimeout = null;
+    const WS_URL = 'ws://localhost:65030';
+
+    function connectWebSocket() {
+      ws = new WebSocket(WS_URL);
+
+      ws.onopen = () => {
+        console.log('WebSocket connected');
+        updateConnectionStatus(true);
+        if (reconnectTimeout) {
+          clearTimeout(reconnectTimeout);
+          reconnectTimeout = null;
+        }
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data);
+          if (message.type === 'health-update') {
+            updateDashboard(message.data);
+          }
+        } catch (error) {
+          console.error('Error parsing message:', error);
+        }
+      };
+
+      ws.onclose = () => {
+        console.log('WebSocket disconnected');
+        updateConnectionStatus(false);
+        reconnectTimeout = setTimeout(connectWebSocket, 3000);
+      };
+
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        updateConnectionStatus(false);
+      };
+    }
+
+    function updateConnectionStatus(connected) {
+      const dot = document.getElementById('connection-dot');
+      const text = document.getElementById('connection-text');
+
+      if (connected) {
+        dot.className = 'connection-dot connected';
+        text.textContent = 'Live';
+      } else {
+        dot.className = 'connection-dot disconnected';
+        text.textContent = 'Reconnecting...';
+      }
+    }
+
+    function updateDashboard(data) {
+      // Update stats
+      const stats = data.stats || {};
+      document.getElementById('stat-total').textContent = stats.total || data.servers.length;
+      document.getElementById('stat-healthy').textContent = stats.healthy || 0;
+      document.getElementById('stat-unhealthy').textContent = stats.unhealthy || 0;
+      document.getElementById('stat-unreachable').textContent = stats.unreachable || 0;
+
+      // Update servers
+      const serversGrid = document.getElementById('servers');
+      serversGrid.innerHTML = '';
+
+      data.servers.forEach(server => {
+        const card = document.createElement('div');
+        card.className = `server-card ${server.status}`;
+
+        const statusBadge = `<span class="status-badge ${server.status}">${server.status}</span>`;
+
+        const errorHtml = server.error
+          ? `<div class="error-message">❌ ${server.error}</div>`
+          : '';
+
+        card.innerHTML = `
+          <div class="server-header">
+            <div class="server-name">
+              <span style="color: ${server.color || '#666'}">●</span>
+              ${server.name}
+            </div>
+            ${statusBadge}
+          </div>
+          <div class="server-details">
+            <div class="detail-row">
+              <span class="detail-label">Response Time</span>
+              <span class="detail-value">${server.responseTime}ms</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Tools Tested</span>
+              <span class="detail-value">${server.toolsTested.join(', ')}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Last Checked</span>
+              <span class="detail-value">${new Date(server.lastChecked).toLocaleTimeString()}</span>
+            </div>
+          </div>
+          ${errorHtml}
+        `;
+
+        serversGrid.appendChild(card);
+      });
+
+      // Update last update time
+      document.getElementById('last-update').textContent =
+        `Last updated: ${new Date(data.lastUpdate).toLocaleString()}`;
+    }
+
+    // Connect on page load
+    connectWebSocket();
+  </script>
+</body>
+</html>
