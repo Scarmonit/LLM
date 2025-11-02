@@ -146,7 +146,7 @@ async def relay(request: RelayRequest) -> RelayAck:
             "Authorization": f"Bearer {token}",
             "Accept": "application/vnd.github+json",
         }
-        url = f"https://api.github.com/repos/{{owner}}/{{name}}/dispatches"
+        url = f"https://api.github.com/repos/{owner}/{name}/dispatches"
         async with httpx.AsyncClient(timeout=5.0) as client:
             r = await client.post(url, headers=headers, json={
                 "event_type": event_type,
