@@ -36,7 +36,7 @@ const MAX_RESTART_ATTEMPTS = 3;
 /**
  * MCP Server Configuration
  */
-const MCP_BASE_DIR = 'C:/Users/scarm/src/mcp';
+const MCP_BASE_DIR = 'C:/Users/scarm/LLM/src/mcp';
 
 const MCP_SERVERS = [
   {
@@ -548,6 +548,18 @@ class MCPDashboardServer {
    */
   startHTTPServer() {
     const server = createServer(async (req, res) => {
+      // Add CORS headers for all responses
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+      // Handle preflight requests
+      if (req.method === 'OPTIONS') {
+        res.writeHead(204);
+        res.end();
+        return;
+      }
+
       if (req.url === '/' || req.url === '/index.html') {
         try {
           const html = await readFile(join(__dirname, 'mcp-dashboard.html'), 'utf-8');
@@ -566,6 +578,16 @@ class MCPDashboardServer {
         } catch (error) {
           res.writeHead(404);
           res.end('Enhanced dashboard not found');
+        }
+      } else if (req.url === '/unified' || req.url === '/inspector') {
+        // Serve unified inspector integration
+        try {
+          const html = await readFile(join(__dirname, 'mcp-unified-inspector.html'), 'utf-8');
+          res.writeHead(200, { 'Content-Type': 'text/html' });
+          res.end(html);
+        } catch (error) {
+          res.writeHead(404);
+          res.end('Unified inspector not found');
         }
       } else if (req.url === '/api/health') {
         // REST API endpoint for current health
