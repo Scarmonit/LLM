@@ -16,12 +16,28 @@ const PORT = 65033;
 
 const server = createServer(async (req, res) => {
   try {
-    const html = await readFile(join(__dirname, 'src/mcp/mcp-unified-inspector.html'), 'utf-8');
+    // Serve enhanced version by default, original on /original route
+    let htmlFile = 'mcp-unified-inspector-enhanced.html';
+
+    if (req.url === '/original') {
+      htmlFile = 'mcp-unified-inspector.html';
+    } else if (req.url === '/api/status') {
+      // Health check endpoint
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        status: 'running',
+        version: '2.0.0-enhanced',
+        timestamp: new Date().toISOString()
+      }));
+      return;
+    }
+
+    const html = await readFile(join(__dirname, 'src/mcp', htmlFile), 'utf-8');
     res.writeHead(200, { 'Content-Type': 'text/html' });
     res.end(html);
   } catch (error) {
     res.writeHead(404);
-    res.end('Unified inspector not found');
+    res.end('Unified inspector not found: ' + error.message);
   }
 });
 

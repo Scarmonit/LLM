@@ -1,0 +1,50 @@
+{
+  "name": "infrastructure-automation",
+  "version": "1.0.0",
+  "description": "Complete infrastructure automation suite for S3 backups, CI/CD, and CDN integration",
+  "type": "module",
+  "main": "cloudflare-config.js",
+  "scripts": {
+    "deploy": "bash deploy-all.sh",
+    "deploy:backup": "aws cloudformation deploy --template-file s3-backup-cloudformation.yaml --stack-name s3-backup-infrastructure --capabilities CAPABILITY_NAMED_IAM",
+    "deploy:pipeline": "aws cloudformation deploy --template-file codepipeline-config.yaml --stack-name codepipeline-infrastructure --capabilities CAPABILITY_NAMED_IAM",
+    "deploy:cloudflare": "node cloudflare-config.js",
+    "update:lambda": "zip s3-backup-lambda.zip s3-backup-lambda.js && aws lambda update-function-code --function-name s3-backup-automation --zip-file fileb://s3-backup-lambda.zip",
+    "test:backup": "aws lambda invoke --function-name s3-backup-automation --payload '{}' response.json && cat response.json",
+    "test:pipeline": "aws codepipeline start-pipeline-execution --name automated-deployment-pipeline",
+    "logs:backup": "aws logs tail /aws/lambda/s3-backup-automation --follow",
+    "logs:build": "aws logs tail /aws/codebuild/automated-build --follow",
+    "status:backup": "aws cloudformation describe-stacks --stack-name s3-backup-infrastructure --query 'Stacks[0].StackStatus' --output text",
+    "status:pipeline": "aws codepipeline get-pipeline-state --name automated-deployment-pipeline",
+    "purge:cache": "node -e \"import('./cloudflare-config.js').then(m => m.purgeCache())\"",
+    "validate": "aws cloudformation validate-template --template-body file://s3-backup-cloudformation.yaml && aws cloudformation validate-template --template-body file://codepipeline-config.yaml",
+    "cleanup": "aws cloudformation delete-stack --stack-name codepipeline-infrastructure && aws cloudformation delete-stack --stack-name s3-backup-infrastructure"
+  },
+  "keywords": [
+    "infrastructure",
+    "aws",
+    "cloudformation",
+    "lambda",
+    "s3",
+    "backup",
+    "codepipeline",
+    "ci-cd",
+    "cloudflare",
+    "cdn",
+    "automation"
+  ],
+  "author": "Parker Dunn <scarmonit@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.682.0",
+    "@aws-sdk/client-sns": "^3.682.0"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/scarmonit/infrastructure-automation"
+  }
+}

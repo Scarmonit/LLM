@@ -1,0 +1,180 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Scheduled S3 Backup Infrastructure - Daily backups of scarmonit-docs bucket'
+
+Parameters:
+  NotificationEmail:
+    Type: String
+    Default: scarmonit@gmail.com
+    Description: Email address for backup notifications
+
+Resources:
+  # SNS Topic for backup notifications
+  BackupNotificationTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: s3-backup-notifications
+      DisplayName: S3 Backup Notifications
+      Subscription:
+        - Endpoint: !Ref NotificationEmail
+          Protocol: email
+
+  # S3 Backup Bucket
+  BackupBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: scarmonit-docs-backup
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteOldBackups
+            Status: Enabled
+            ExpirationInDays: 90
+            NoncurrentVersionExpirationInDays: 30
+          - Id: TransitionToGlacier
+            Status: Enabled
+            Transitions:
+              - StorageClass: GLACIER
+                TransitionInDays: 30
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Purpose
+          Value: Automated Backups
+        - Key: Source
+          Value: scarmonit-docs
+
+  # IAM Role for Lambda
+  BackupLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: s3-backup-lambda-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: S3BackupPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:ListBucket
+                  - s3:GetObject
+                Resource:
+                  - arn:aws:s3:::scarmonit-docs
+                  - arn:aws:s3:::scarmonit-docs/*
+              - Effect: Allow
+                Action:
+                  - s3:ListBucket
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:CreateBucket
+                  - s3:PutBucketVersioning
+                Resource:
+                  - arn:aws:s3:::scarmonit-docs-backup
+                  - arn:aws:s3:::scarmonit-docs-backup/*
+              - Effect: Allow
+                Action:
+                  - sns:Publish
+                Resource: !Ref BackupNotificationTopic
+
+  # Lambda Function
+  BackupLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: s3-backup-automation
+      Runtime: nodejs20.x
+      Handler: index.handler
+      Role: !GetAtt BackupLambdaRole.Arn
+      Timeout: 900
+      MemorySize: 512
+      Environment:
+        Variables:
+          SNS_TOPIC_ARN: !Ref BackupNotificationTopic
+          SOURCE_BUCKET: scarmonit-docs
+          BACKUP_BUCKET: scarmonit-docs-backup
+      Code:
+        ZipFile: |
+          // Placeholder - deploy actual code from s3-backup-lambda.js
+          export const handler = async (event) => {
+            console.log('Placeholder Lambda - deploy actual code');
+            return { statusCode: 200, body: 'Placeholder' };
+          };
+      Tags:
+        - Key: Purpose
+          Value: Automated S3 Backups
+
+  # EventBridge Rule - Daily at 2 AM UTC
+  BackupScheduleRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: s3-backup-daily-schedule
+      Description: Trigger S3 backup Lambda daily at 2 AM UTC
+      ScheduleExpression: cron(0 2 * * ? *)
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt BackupLambdaFunction.Arn
+          Id: BackupLambdaTarget
+
+  # Permission for EventBridge to invoke Lambda
+  BackupLambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref BackupLambdaFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt BackupScheduleRule.Arn
+
+  # CloudWatch Alarm for backup failures
+  BackupFailureAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: s3-backup-failures
+      AlarmDescription: Alert when S3 backup Lambda fails
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Statistic: Sum
+      Period: 86400
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref BackupLambdaFunction
+      AlarmActions:
+        - !Ref BackupNotificationTopic
+
+Outputs:
+  BackupBucketName:
+    Description: Name of the backup S3 bucket
+    Value: !Ref BackupBucket
+    Export:
+      Name: S3BackupBucketName
+
+  BackupLambdaArn:
+    Description: ARN of the backup Lambda function
+    Value: !GetAtt BackupLambdaFunction.Arn
+    Export:
+      Name: S3BackupLambdaArn
+
+  SNSTopicArn:
+    Description: ARN of the SNS notification topic
+    Value: !Ref BackupNotificationTopic
+    Export:
+      Name: S3BackupSNSTopicArn
+
+  ScheduleRuleName:
+    Description: Name of the EventBridge schedule rule
+    Value: !Ref BackupScheduleRule
+    Export:
+      Name: S3BackupScheduleRule

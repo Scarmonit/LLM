@@ -25,7 +25,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const WS_PORT = 65030;
-const HTTP_PORT = 65033;
+const HTTP_PORT = 65031;
 const HEALTH_CHECK_INTERVAL = 5000; // 5 seconds
 const METRICS_DIR = join(__dirname, '../../.metrics');
 const METRICS_FILE = join(METRICS_DIR, 'mcp-health-metrics.json');

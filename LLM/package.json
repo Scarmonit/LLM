@@ -11,13 +11,18 @@
     "test:watch": "node --test --watch tests/**/*.test.js",
     "test:coverage": "node --test --experimental-test-coverage tests/**/*.test.js",
     "lint": "eslint src/ tests/",
-    "start:dashboard": "node src/mcp/mcp-dashboard-server.js"
+    "start:dashboard": "node src/mcp/mcp-dashboard-server.js",
+    "start:inspector": "node serve-unified-inspector.js",
+    "start": "concurrently \"npm run start:dashboard\" \"npm run start:inspector\"",
+    "restart": "taskkill /F /IM node.exe /FI \"WINDOWTITLE eq *mcp*\" 2>nul & timeout /t 2 /nobreak >nul & npm start",
+    "deploy": "node deploy-mcp-dashboard.js",
+    "docker:build": "docker build -t mcp-dashboard:latest -f deploy/docker/Dockerfile .",
+    "docker:run": "docker run -p 65030:65030 -p 65031:65031 -p 65033:65033 mcp-dashboard:latest"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.4",
-    "puppeteer": "^24.27.0"
-  },
-  "devDependencies": {
+    "axios": "^1.13.1",
+    "puppeteer": "^22.15.0",
     "ws": "^8.18.0"
   }
 }
