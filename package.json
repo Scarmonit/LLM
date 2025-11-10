@@ -31,15 +31,18 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.20.1",
-    "axios": "^1.7.9",
+    "axios": "^1.13.2",
+    "chrome-remote-interface": "^0.33.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "openai": "^6.8.1",
     "winston": "^3.17.0",
     "ws": "^8.18.3"
   },
   "devDependencies": {
     "eslint": "^9.18.0",
-    "prettier": "^3.4.2"
+    "prettier": "^3.4.2",
+    "puppeteer": "^24.29.1"
   }
 }

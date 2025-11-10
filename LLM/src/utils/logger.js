@@ -29,7 +29,7 @@ function formatMessage(level, message, meta = {}) {
 export const logger = {
   info(message, meta) {
     if (shouldLog('info')) {
-      console.log(formatMessage('info', message, meta));
+      console.error(formatMessage('info', message, meta));
     }
   },
 
@@ -41,13 +41,13 @@ export const logger = {
 
   warn(message, meta) {
     if (shouldLog('warn')) {
-      console.warn(formatMessage('warn', message, meta));
+      console.error(formatMessage('warn', message, meta));
     }
   },
 
   debug(message, meta) {
     if (shouldLog('debug')) {
-      console.debug(formatMessage('debug', message, meta));
+      console.error(formatMessage('debug', message, meta));
     }
   },
 
