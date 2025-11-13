@@ -115,3 +115,13 @@ memory.sqlite-shm
 .extraction-path.txt
 .git-for-windows-updater
 nul
+
+# Additional MCP and Claude exclusions
+.claude/debug/
+.claude/mcp/servers/**/.venv-linux/
+.claude/mcp/servers/**/.venv/
+.claude-bridge/
+.aitk/
+.gemini/
+.automation-tools/
+.dbclient/
