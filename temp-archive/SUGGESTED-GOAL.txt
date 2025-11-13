@@ -1,0 +1,1 @@
+Try asking ECM to analyze your AWS infrastructure and create a cost optimization report

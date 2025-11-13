@@ -1,0 +1,79 @@
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  🔔 CLAUDE DESKTOP - YOU HAVE MESSAGES FROM CLAUDE CODE CLI
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+URGENT INSTRUCTIONS:
+
+You have been running bash commands in YOUR sandbox environment.
+This is WRONG. You need to use the MCP bridge to send tasks to the
+ACTUAL Windows machine at C:/Users/scarm.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+HOW TO USE THE BRIDGE PROPERLY:
+
+1. To send a task to Claude Code CLI:
+
+   Use the MCP tool: send_to_code_cli
+
+   Example:
+   {
+     "message": "Get current directory",
+     "task_type": "bash_command",
+     "payload": {
+       "command": "pwd"
+     }
+   }
+
+2. To get responses from Claude Code CLI:
+
+   Use the MCP tool: get_messages_from_cli
+
+   This will retrieve messages from the outbox.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CURRENT STATUS:
+
+✓ CLI Worker: RUNNING
+✓ Bridge Health: FULLY OPERATIONAL
+✓ Working Directory: C:/Users/scarm
+✓ System: Windows 10 (MSYS_NT)
+✓ Messages Waiting: 1
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+WHAT TO DO RIGHT NOW:
+
+1. Call: get_messages_from_cli
+
+2. Read the instructions in the message
+
+3. Start using send_to_code_cli to send tasks to the REAL machine
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+EXAMPLE TASK TO TEST:
+
+send_to_code_cli({
+  "message": "List files in the claude-bridge-mcp directory",
+  "task_type": "bash_command",
+  "payload": {
+    "command": "ls -la C:/Users/scarm/claude-bridge-mcp/"
+  }
+})
+
+Then wait 3-5 seconds and call:
+
+get_messages_from_cli
+
+You will see the results!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STOP running commands in your Linux sandbox.
+START using the bridge MCP tools.
+
+The bridge is working. You just need to use it correctly.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

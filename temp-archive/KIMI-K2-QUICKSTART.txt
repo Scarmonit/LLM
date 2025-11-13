@@ -1,0 +1,122 @@
+═══════════════════════════════════════════════════════════════
+  KIMI K2 AI - QUICK START CARD
+  Get operational in 2 minutes
+═══════════════════════════════════════════════════════════════
+
+STEP 1: RUN SETUP (30 seconds)
+───────────────────────────────────────────────────────────────
+Windows PowerShell (Recommended):
+  powershell.exe -ExecutionPolicy Bypass -File "C:\Users\scarm\Get-OpenRouterKey.ps1"
+
+Git Bash / MSYS2:
+  cd ~ && ./quick-openrouter-setup.sh
+
+STEP 2: IN BROWSER (60 seconds)
+───────────────────────────────────────────────────────────────
+URL: https://openrouter.ai/keys
+
+1. Click "Sign In"
+2. Choose: GitHub / Google / Email
+3. Click "Create Key"
+4. Name it: "Kimi K2 Testing"
+5. Copy key (starts with sk-or-v1-...)
+
+STEP 3: TEST IT WORKS (30 seconds)
+───────────────────────────────────────────────────────────────
+Quick test:
+  ./test-kimi-k2-quick.sh
+
+Full demo (7 examples):
+  ./start-kimi-k2.sh
+
+═══════════════════════════════════════════════════════════════
+
+QUICK TEST COMMANDS
+───────────────────────────────────────────────────────────────
+Check key is set:
+  echo $OPENROUTER_API_KEY
+
+Validate key:
+  curl https://openrouter.ai/api/v1/auth/key \
+    -H "Authorization: Bearer $OPENROUTER_API_KEY"
+
+Test Kimi K2:
+  curl https://openrouter.ai/api/v1/chat/completions \
+    -H "Authorization: Bearer $OPENROUTER_API_KEY" \
+    -H "Content-Type: application/json" \
+    -d '{"model":"moonshotai/kimi-k2:free","messages":[{"role":"user","content":"Hi"}]}'
+
+═══════════════════════════════════════════════════════════════
+
+FREE TIER DETAILS
+───────────────────────────────────────────────────────────────
+Requests:     100 per day
+Cost:         $0 (completely free)
+Credit card:  Not required
+Context:      32K tokens
+Model:        moonshotai/kimi-k2:free
+Endpoint:     https://openrouter.ai/api/v1
+
+═══════════════════════════════════════════════════════════════
+
+TROUBLESHOOTING
+───────────────────────────────────────────────────────────────
+Key not set?
+  export OPENROUTER_API_KEY="sk-or-v1-YOUR_KEY"
+  source ~/.bash_profile
+
+Invalid key? (401)
+  - Check format: sk-or-v1-...
+  - Create new: https://openrouter.ai/keys
+
+Rate limit? (429)
+  - Free tier: 100/day
+  - Wait 24 hours
+
+Scripts won't run?
+  chmod +x ~/test-kimi-k2-quick.sh
+  chmod +x ~/start-kimi-k2.sh
+
+═══════════════════════════════════════════════════════════════
+
+EXAMPLE CODE
+───────────────────────────────────────────────────────────────
+Node.js:
+  const OpenAI = require('openai');
+  const client = new OpenAI({
+    baseURL: 'https://openrouter.ai/api/v1',
+    apiKey: process.env.OPENROUTER_API_KEY,
+  });
+
+Python:
+  from openai import OpenAI
+  client = OpenAI(
+      base_url="https://openrouter.ai/api/v1",
+      api_key=os.environ["OPENROUTER_API_KEY"]
+  )
+
+═══════════════════════════════════════════════════════════════
+
+USEFUL LINKS
+───────────────────────────────────────────────────────────────
+Get API Key:    https://openrouter.ai/keys
+Dashboard:      https://openrouter.ai
+Usage Stats:    https://openrouter.ai/settings/usage
+Documentation:  https://openrouter.ai/docs
+Model Info:     https://openrouter.ai/moonshotai/kimi-k2:free
+Web Interface:  https://kimi.moonshot.cn (unlimited free)
+
+═══════════════════════════════════════════════════════════════
+
+FILES CREATED
+───────────────────────────────────────────────────────────────
+Setup:         C:\Users\scarm\Get-OpenRouterKey.ps1
+Setup (Bash):  C:\Users\scarm\quick-openrouter-setup.sh
+Quick Test:    C:\Users\scarm\test-kimi-k2-quick.sh
+Full Demo:     C:\Users\scarm\start-kimi-k2.sh
+Complete Doc:  C:\Users\scarm\KIMI-K2-SOLUTION.md
+This Card:     C:\Users\scarm\KIMI-K2-QUICKSTART.txt
+
+═══════════════════════════════════════════════════════════════
+  Ready? Run the setup script and get started in 2 minutes!
+═══════════════════════════════════════════════════════════════

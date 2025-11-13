@@ -1,0 +1,30 @@
+AUTONOMOUS ORCHESTRATION SYSTEM IS RUNNING
+
+Status: ✓ READY
+ECM Server: http://localhost:3000 (RUNNING)
+LLM: Ollama llama3.1:latest (FREE - NO API COSTS)
+MCP Servers: aws-cli, terraform, github, filesystem (4 connected)
+
+The interactive CLI should have opened in a new window.
+
+If not, run:
+  cd C:\Users\scarm\orchestrator
+  node cli.js
+
+Usage:
+  🤖 > Create a file called demo.txt with content: This is a test
+  🤖 > /status
+  🤖 > /tasks
+  🤖 > /quit
+
+Quick command (from any terminal):
+  cd orchestrator
+  orchestrator "your goal here"
+
+The system will:
+1. Take your natural language goal
+2. Use Ollama (free local LLM) to break it into subtasks
+3. Schedule and execute tasks via MCP servers
+4. Return results
+
+NO CLAUDE CODE NEEDED - This is a standalone orchestration system.
