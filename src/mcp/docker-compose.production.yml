@@ -1,0 +1,213 @@
+version: '3.8'
+
+# ============================================================================
+# Production MCP Server Deployment
+# Includes: Omnipotent MCP, A2A Unified MCP
+# Features: Health checks, monitoring, resource limits, logging
+# ============================================================================
+
+services:
+  # ========================================================================
+  # Omnipotent MCP Server - PRODUCTION
+  # ========================================================================
+  omnipotent-mcp-prod:
+    container_name: omnipotent-mcp-production
+    build:
+      context: ../..
+      dockerfile: src/mcp/Dockerfile.omnipotent-production
+    image: omnipotent-mcp:production
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+
+    # Environment configuration
+    environment:
+      - CACHE_TTL_SECONDS=60
+      - HTTP_POOL_SIZE=20
+      - RATE_LIMIT_CALLS=100
+      - RATE_LIMIT_PERIOD=60
+      - LOG_LEVEL=INFO
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys, psutil; sys.exit(0 if psutil.cpu_percent(interval=0.1) < 95 else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service=omnipotent-mcp"
+
+    # Security
+    security_opt:
+      - no-new-privileges:true
+    read_only: false
+    tmpfs:
+      - /tmp:size=100M,mode=1777
+
+    networks:
+      - mcp-production
+
+    labels:
+      - "com.mcp.service=omnipotent"
+      - "com.mcp.environment=production"
+      - "com.mcp.version=3.0"
+
+  # ========================================================================
+  # A2A Unified MCP Server - PRODUCTION
+  # ========================================================================
+  a2a-unified-mcp-prod:
+    container_name: a2a-unified-mcp-production
+    build:
+      context: ../..
+      dockerfile: src/mcp/Dockerfile.a2a-unified-production
+    image: a2a-unified-mcp:production
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+
+    # Environment configuration
+    environment:
+      - CACHE_TTL_SHORT=60
+      - CACHE_TTL_MEDIUM=300
+      - CACHE_TTL_LONG=3600
+      - HTTP_POOL_SIZE=30
+      - RATE_LIMIT_CALLS=150
+      - RATE_LIMIT_PERIOD=60
+      - LOG_LEVEL=INFO
+
+    # Persistent data
+    volumes:
+      - a2a-data-prod:/app/data
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service=a2a-unified-mcp"
+
+    # Security
+    security_opt:
+      - no-new-privileges:true
+    read_only: false
+    tmpfs:
+      - /tmp:size=100M,mode=1777
+
+    networks:
+      - mcp-production
+
+    labels:
+      - "com.mcp.service=a2a-unified"
+      - "com.mcp.environment=production"
+      - "com.mcp.version=2.0"
+
+  # ========================================================================
+  # Monitoring & Metrics (Optional)
+  # ========================================================================
+  mcp-monitor:
+    container_name: mcp-monitor
+    image: prom/prometheus:latest
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    networks:
+      - mcp-production
+    labels:
+      - "com.mcp.service=monitoring"
+
+# ========================================================================
+# Networks
+# ========================================================================
+networks:
+  mcp-production:
+    driver: bridge
+    name: mcp-production-network
+
+# ========================================================================
+# Volumes
+# ========================================================================
+volumes:
+  a2a-data-prod:
+    name: a2a-unified-data-production
+  prometheus-data:
+    name: mcp-prometheus-data
+
+# ============================================================================
+# USAGE INSTRUCTIONS
+# ============================================================================
+#
+# Build production images:
+#   docker-compose -f docker-compose.production.yml build
+#
+# Start all services:
+#   docker-compose -f docker-compose.production.yml up -d
+#
+# View logs:
+#   docker-compose -f docker-compose.production.yml logs -f [service-name]
+#
+# Check health status:
+#   docker-compose -f docker-compose.production.yml ps
+#
+# Scale services:
+#   docker-compose -f docker-compose.production.yml up -d --scale omnipotent-mcp-prod=2
+#
+# Stop all services:
+#   docker-compose -f docker-compose.production.yml down
+#
+# Clean up (including volumes):
+#   docker-compose -f docker-compose.production.yml down -v
+#
+# Monitor resource usage:
+#   docker stats omnipotent-mcp-production a2a-unified-mcp-production
+#
+# Exec into container:
+#   docker exec -it omnipotent-mcp-production /bin/bash
+#
+# View Prometheus metrics:
+#   http://localhost:9090
+#
+# ============================================================================

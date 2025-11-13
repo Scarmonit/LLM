@@ -1,0 +1,55 @@
+# A2A Unified MCP Server v2.0 - OPTIMIZED
+# Enhanced knowledge search, memory, and system tools
+
+FROM python:3.11-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    jq \
+    sqlite3 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Create optimized requirements
+RUN cat > requirements.txt << 'EOF'
+# Core MCP
+mcp>=1.0.0
+
+# Async HTTP clients
+aiohttp>=3.9.0
+httpx>=0.25.0
+
+# Database
+aiosqlite>=0.19.0
+
+# Utilities
+python-dotenv>=1.0.0
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+EOF
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy optimized server
+COPY unified-intelligent-mcp/server_optimized.py /app/server.py
+
+RUN chmod +x /app/server.py
+
+# Create data directory
+RUN mkdir -p /app/data
+
+# Environment
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONOPTIMIZE=1
+ENV A2A_DATA_DIR=/app/data
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+  CMD python -c "import sys; sys.exit(0)"
+
+VOLUME ["/app/data"]
+
+CMD ["python", "-u", "server.py"]

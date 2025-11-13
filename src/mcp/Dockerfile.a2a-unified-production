@@ -1,0 +1,81 @@
+# ============================================================================
+# A2A Unified MCP Server - Production Dockerfile
+# Multi-stage build with security hardening
+# ============================================================================
+
+# Stage 1: Build stage
+FROM python:3.11-slim as builder
+
+RUN groupadd -r mcp && useradd -r -g mcp mcp
+
+WORKDIR /build
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    g++ \
+    make \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies (sqlite3 is built into Python)
+RUN pip install --user --no-cache-dir \
+    mcp \
+    httpx \
+    aiohttp
+
+# Stage 2: Production stage
+FROM python:3.11-slim
+
+LABEL maintainer="MCP Production Team"
+LABEL description="A2A Unified MCP Server - Production Ready"
+LABEL version="2.0"
+
+# Security hardening
+RUN groupadd -r mcp && useradd -r -g mcp mcp
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    sqlite3 \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+WORKDIR /app
+
+# Copy Python packages from builder
+COPY --from=builder /root/.local /home/mcp/.local
+
+# Copy application code
+COPY unified-intelligent-mcp/server_optimized.py ./server.py
+
+# Create data directory
+RUN mkdir -p /app/data && chown -R mcp:mcp /app/data
+
+# Security: Set proper permissions
+RUN chown -R mcp:mcp /app && \
+    chmod 755 /app && \
+    chmod 644 /app/server.py
+
+# Environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PATH=/home/mcp/.local/bin:$PATH \
+    CACHE_TTL_SHORT=60 \
+    CACHE_TTL_MEDIUM=300 \
+    CACHE_TTL_LONG=3600 \
+    HTTP_POOL_SIZE=30 \
+    RATE_LIMIT_CALLS=150 \
+    RATE_LIMIT_PERIOD=60
+
+# Security: Switch to non-root user
+USER mcp
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD python -c "import sys; sys.exit(0)"
+
+# Volume for persistent data
+VOLUME ["/app/data"]
+
+# Run the server
+CMD ["python", "-u", "server.py"]

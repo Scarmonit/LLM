@@ -1,0 +1,53 @@
+# Omnipotent MCP Server v2.0 - OPTIMIZED
+# High-performance system control and automation server
+
+FROM python:3.11-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    procps \
+    net-tools \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Create optimized requirements
+RUN cat > requirements.txt << 'EOF'
+# Core MCP
+mcp>=1.0.0
+
+# Performance & Async
+httpx>=0.25.0
+aiohttp>=3.9.0
+asyncio>=3.4.3
+
+# System monitoring
+psutil>=5.9.0
+
+# Web scraping
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+
+# Utilities
+python-dotenv>=1.0.0
+requests>=2.31.0
+EOF
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy optimized server
+COPY omnipotent-mcp/server_optimized.py /app/server.py
+
+RUN chmod +x /app/server.py
+
+# Environment
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONOPTIMIZE=1
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+  CMD python -c "import sys; sys.exit(0)"
+
+CMD ["python", "-u", "server.py"]

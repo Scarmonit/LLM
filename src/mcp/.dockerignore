@@ -1,0 +1,8 @@
+# Exclude everything except what we need
+**/*
+
+# Include only necessary files
+!omnipotent-mcp/server_production.py
+!unified-intelligent-mcp/server_optimized.py
+!omnipotent-mcp/requirements.txt
+!unified-intelligent-mcp/requirements.txt

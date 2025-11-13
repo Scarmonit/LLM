@@ -1,0 +1,113 @@
+version: '3.8'
+
+services:
+  # Omnipotent MCP - OPTIMIZED
+  omnipotent-mcp-optimized:
+    container_name: omnipotent-mcp-optimized
+    build:
+      context: ../..
+      dockerfile: src/mcp/Dockerfile.omnipotent-optimized
+    image: omnipotent-mcp:optimized
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    environment:
+      - CACHE_TTL_SECONDS=60
+      - HTTP_POOL_SIZE=20
+      - RATE_LIMIT_CALLS=100
+      - RATE_LIMIT_PERIOD=60
+    networks:
+      - mcp-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+
+  # A2A Unified MCP - OPTIMIZED
+  a2a-unified-mcp-optimized:
+    container_name: a2a-unified-mcp-optimized
+    build:
+      context: ../..
+      dockerfile: src/mcp/Dockerfile.a2a-unified-optimized
+    image: a2a-unified-mcp:optimized
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    environment:
+      - CACHE_TTL_SHORT=60
+      - CACHE_TTL_MEDIUM=300
+      - CACHE_TTL_LONG=3600
+      - HTTP_POOL_SIZE=30
+      - RATE_LIMIT_CALLS=150
+      - RATE_LIMIT_PERIOD=60
+    volumes:
+      - a2a-data:/app/data
+    networks:
+      - mcp-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+
+networks:
+  mcp-network:
+    driver: bridge
+    name: mcp-network-optimized
+
+volumes:
+  a2a-data:
+    name: a2a-unified-data
+
+# ============================================================================
+# USAGE
+# ============================================================================
+# 
+# Build optimized images:
+#   docker-compose -f docker-compose.optimized.yml build
+# 
+# Start optimized services:
+#   docker-compose -f docker-compose.optimized.yml up -d
+# 
+# View logs:
+#   docker-compose -f docker-compose.optimized.yml logs -f
+# 
+# Check status:
+#   docker-compose -f docker-compose.optimized.yml ps
+# 
+# Stop services:
+#   docker-compose -f docker-compose.optimized.yml down
+# 
+# Performance stats:
+#   docker stats omnipotent-mcp-optimized a2a-unified-mcp-optimized
+# 
+# ============================================================================
