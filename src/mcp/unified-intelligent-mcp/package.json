@@ -1,0 +1,40 @@
+{
+  "name": "unified-intelligent-mcp",
+  "version": "1.0.0",
+  "description": "Unified MCP server combining sequential thinking and omnipotent system operations",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "unified-intelligent-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc && chmod +x dist/index.js",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "test": "node --test tests/*.test.js",
+    "deploy": "npm run build && bash scripts/deploy.sh",
+    "verify": "bash scripts/verify.sh"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "sequential-thinking",
+    "system-operations",
+    "ai-integration"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "node-fetch": "^3.3.2",
+    "systeminformation": "^5.23.5",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.1",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

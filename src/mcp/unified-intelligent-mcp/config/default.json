@@ -1,0 +1,42 @@
+{
+  "server": {
+    "name": "unified-intelligent-mcp",
+    "version": "1.0.0",
+    "description": "Unified MCP server with sequential thinking and system operations"
+  },
+  "state": {
+    "directory": "~/.unified-intelligent-mcp",
+    "persistWorkflows": true,
+    "persistExecutions": true,
+    "maxHistoryEntries": 1000
+  },
+  "thinking": {
+    "maxSteps": 20,
+    "defaultSteps": 10,
+    "enableRevision": true,
+    "enableBranching": true
+  },
+  "system": {
+    "enableProcessManagement": true,
+    "enableNetworkMonitoring": true,
+    "monitoringDefaults": {
+      "duration": 10,
+      "interval": 1
+    }
+  },
+  "integration": {
+    "filesystemMCP": {
+      "enabled": true,
+      "createDirsDefault": true
+    },
+    "memoryMCP": {
+      "enabled": true,
+      "autoSync": true
+    }
+  },
+  "logging": {
+    "level": "info",
+    "enableDebug": false,
+    "logToFile": false
+  }
+}

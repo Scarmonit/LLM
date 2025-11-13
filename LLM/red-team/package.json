@@ -1,0 +1,26 @@
+{
+  "name": "llm-red-team",
+  "version": "1.0.0",
+  "description": "Red Team Testing Suite for LLM Prompt Injection & Jailbreak Attacks (2025 Techniques)",
+  "main": "red-team-tester.js",
+  "scripts": {
+    "test": "node red-team-tester.js",
+    "quick": "node red-team-quicktest.js",
+    "comprehensive": "node red-team-comprehensive.js",
+    "benchmark": "node red-team-benchmark.js"
+  },
+  "keywords": [
+    "llm",
+    "red-team",
+    "prompt-injection", 
+    "jailbreak",
+    "security",
+    "testing"
+  ],
+  "author": "Red Team Security",
+  "license": "MIT",
+  "dependencies": {},
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
