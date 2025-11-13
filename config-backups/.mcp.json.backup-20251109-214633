@@ -2,10 +2,8 @@
   "mcpServers": {
     "filesystem": {
       "type": "stdio",
-      "command": "cmd",
+      "command": "npx",
       "args": [
-        "/c",
-        "npx",
         "-y",
         "@modelcontextprotocol/server-filesystem",
         "C:/Users/scarm"
@@ -14,10 +12,8 @@
     },
     "puppeteer": {
       "type": "stdio",
-      "command": "cmd",
+      "command": "npx",
       "args": [
-        "/c",
-        "npx",
         "-y",
         "@modelcontextprotocol/server-puppeteer"
       ],
@@ -25,10 +21,8 @@
     },
     "shell": {
       "type": "stdio",
-      "command": "cmd",
+      "command": "npx",
       "args": [
-        "/c",
-        "npx",
         "@modelcontextprotocol/server-shell"
       ],
       "env": {}
@@ -105,73 +99,14 @@
     },
     "claude-code": {
       "type": "stdio",
-      "command": "cmd",
+      "command": "npx",
       "args": [
-        "/c",
-        "npx",
         "-y",
         "@steipete/claude-code-mcp"
       ],
       "env": {
         "CLAUDE_CLI_NAME": "claude",
         "MCP_CLAUDE_DEBUG": "true"
-      }
-    },
-    "omnipotent": {
-      "type": "stdio",
-      "command": "uv",
-      "args": [
-        "--directory",
-        "C:/Users/scarm/omnipotent-mcp",
-        "run",
-        "server_optimized.py"
-      ],
-      "env": {}
-    },
-    "unified-intelligent": {
-      "type": "stdio",
-      "command": "node",
-      "args": [
-        "C:/Users/scarm/unified-intelligent-mcp/dist/index.js"
-      ],
-      "env": {
-        "DEBUG": "0"
-      }
-    },
-    "terraform-mcp": {
-      "type": "stdio",
-      "command": "docker",
-      "args": [
-        "exec",
-        "-i",
-        "terraform-mcp-server",
-        "node",
-        "src/mcp/terraform-mcp-server.js"
-      ],
-      "env": {}
-    },
-    "aws-mcp": {
-      "type": "stdio",
-      "command": "docker",
-      "args": [
-        "exec",
-        "-i",
-        "aws-mcp-server",
-        "node",
-        "aws-mcp-server.js"
-      ],
-      "env": {}
-    },
-    "ai-agent-swarm": {
-      "type": "stdio",
-      "command": "node",
-      "args": [
-        "C:/Users/scarm/ai-agent-swarm-mcp/dist/index.js"
-      ],
-      "env": {
-        "OLLAMA_HOST": "http://localhost:11434",
-        "UNRESTRICTED": "true",
-        "LOG_LEVEL": "info"
       }
     }
   }
