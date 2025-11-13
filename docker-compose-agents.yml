@@ -1,0 +1,146 @@
+version: '3.8'
+
+services:
+  # Agent Orchestrator
+  orchestrator:
+    image: node:22-alpine
+    container_name: agent-orchestrator
+    working_dir: /app
+    volumes:
+      - ./multi-agent-orchestrator.js:/app/orchestrator.js
+      - ./agent-deployment-system.js:/app/deployment.js
+      - agent-data:/data
+      - agent-logs:/logs
+    environment:
+      - NODE_ENV=production
+      - MAX_AGENTS=50
+      - ORCHESTRATOR_PORT=9000
+    ports:
+      - "9000:9000"
+    command: node deployment.js deploy
+    networks:
+      - agent-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "console.log('healthy')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Memory MCP Server
+  memory-mcp:
+    image: node:22-alpine
+    container_name: memory-mcp-server
+    working_dir: /app
+    volumes:
+      - memory-data:/data
+    environment:
+      - MCP_SERVER=memory
+      - DATA_PATH=/data
+    ports:
+      - "9001:9001"
+    networks:
+      - agent-network
+    restart: unless-stopped
+
+  # PostgreSQL for persistent state
+  postgres:
+    image: postgres:16-alpine
+    container_name: agent-postgres
+    environment:
+      - POSTGRES_DB=agents
+      - POSTGRES_USER=agent_user
+      - POSTGRES_PASSWORD=agent_pass_secure_123
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - agent-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agent_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for task queue
+  redis:
+    image: redis:7-alpine
+    container_name: agent-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - agent-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Monitoring Dashboard
+  dashboard:
+    image: node:22-alpine
+    container_name: agent-dashboard
+    working_dir: /app
+    volumes:
+      - ./system-health-dashboard.html:/app/dashboard.html
+    environment:
+      - PORT=8080
+    ports:
+      - "8080:8080"
+    networks:
+      - agent-network
+    command: |
+      sh -c "
+        apk add --no-cache python3 &&
+        cd /app &&
+        python3 -m http.server 8080
+      "
+    restart: unless-stopped
+
+  # Agent Worker Pool (scalable)
+  agent-worker:
+    image: node:22-alpine
+    working_dir: /app
+    volumes:
+      - ./multi-agent-orchestrator.js:/app/orchestrator.js
+      - agent-data:/data
+    environment:
+      - AGENT_ROLE=worker
+      - ORCHESTRATOR_URL=http://orchestrator:9000
+    networks:
+      - agent-network
+    deploy:
+      replicas: 5
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+    depends_on:
+      - orchestrator
+      - redis
+      - postgres
+
+networks:
+  agent-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16
+
+volumes:
+  agent-data:
+    driver: local
+  agent-logs:
+    driver: local
+  memory-data:
+    driver: local
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
