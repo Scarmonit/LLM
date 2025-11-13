@@ -41,3 +41,4 @@ temp/
 # MCP
 .mcp-auth/
 .axiom-key.txt
+.aider*
