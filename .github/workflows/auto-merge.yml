@@ -14,10 +14,10 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    
+
     # Only run if PR has auto-merge label
     if: contains(github.event.pull_request.labels.*.name, 'auto-merge')
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -60,27 +60,30 @@ jobs:
           script: |
             const fs = require('fs');
             const statusFile = 'merge_status.json';
-            
+
             if (fs.existsSync(statusFile)) {
-              const status = JSON.parse(fs.readFileSync(statusFile, 'utf8'));
-              
+              const status = JSON.parse(
+                fs.readFileSync(statusFile, 'utf8')
+              );
+
               let body = '## 🔀 Auto-Merge Status\n\n';
-              
+
               if (status.merged) {
                 body += '✅ **Successfully merged!**\n\n';
                 body += `Merge method: ${status.merge_method}\n`;
               } else {
                 body += '❌ **Unable to merge**\n\n';
                 body += `Reason: ${status.reason}\n\n`;
-                
+
                 if (status.validation) {
                   body += '### Validation Details\n';
-                  body += `- Mergeable: ${status.validation.mergeable}\n`;
-                  body += `- Checks passed: ${status.validation.checks_passed}\n`;
-                  body += `- State: ${status.validation.mergeable_state}\n`;
+                  const v = status.validation;
+                  body += `- Mergeable: ${v.mergeable}\n`;
+                  body += `- Checks passed: ${v.checks_passed}\n`;
+                  body += `- State: ${v.mergeable_state}\n`;
                 }
               }
-              
+
               github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
