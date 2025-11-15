@@ -44,12 +44,6 @@ class AgentOrchestrator:
         """Set up default providers (Ollama ONLY for real LLM, no mock data)."""
         # Try to add Ollama provider - REAL LLM ONLY
         try:
-            # Start Ollama if not running
-            import subprocess
-            subprocess.Popen(['ollama', 'serve'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            import time
-            time.sleep(2)
-            
             ollama = OllamaProvider()
             if ollama.is_available():
                 self.add_provider("ollama", ollama)
