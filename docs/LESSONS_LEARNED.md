@@ -315,15 +315,101 @@ For next Copilot session:
 4. **Show real output** - Verify visibly
 5. **Update this file** - Add new lessons
 
+## NEW CRITICAL LESSON: Document Actions (2025-11-15 19:25 UTC)
+
+### The "Repeated Installation" Problem ❌
+
+**What happened:** Installed Ollama MULTIPLE times (5+) in same session without documenting:
+- Session 1: Installed Ollama
+- Session 2: Installed Ollama (again)
+- Session 3: Installed Ollama (again)
+- Session 4: Installed Ollama (again)  
+- Session 5: Installed Ollama (again) ← User caught this
+
+**Why it failed:**
+- Not updating CURRENT_STATE.md with installation status
+- Not checking if already installed
+- Each new session started from scratch
+- No persistent record of what was done
+- Wasted time and resources
+
+**Lesson:** **DOCUMENT EVERY ACTION IN REAL-TIME**
+
+### What Should Have Happened ✅
+
+**Step 1: Check current state**
+```bash
+# Read docs/CURRENT_STATE.md
+# Check: Is Ollama already installed?
+cat docs/CURRENT_STATE.md | grep -A 5 "Ollama"
+```
+
+**Step 2: Verify before installing**
+```bash
+# Check if Ollama exists
+ollama list 2>&1
+# If exists: USE IT
+# If not exists: INSTALL IT
+```
+
+**Step 3: Document immediately after action**
+```bash
+# Update docs/CURRENT_STATE.md
+# Add timestamp
+# Add what was installed
+# Add verification steps
+```
+
+**Step 4: Commit documentation**
+```bash
+# Use report_progress to commit docs
+# So next session sees what happened
+```
+
+### New Rule: DOCUMENT-AS-YOU-GO
+
+**Before any installation/setup:**
+1. Check `docs/CURRENT_STATE.md` - already done?
+2. Verify on system - already installed?
+3. If yes: USE IT, don't reinstall
+4. If no: Install AND document immediately
+
+**After any installation/setup:**
+1. Update `docs/CURRENT_STATE.md` with:
+   - What was installed
+   - When it was installed  
+   - How to verify it's there
+   - Any issues encountered
+2. Commit the documentation update
+3. Verify the documentation is in git
+
+### Verification Checklist for Installations
+
+```bash
+# 1. Check docs first
+cat docs/CURRENT_STATE.md
+
+# 2. Check system
+which ollama
+ollama list
+python3 -m pytest --version
+
+# 3. Only install if NOT found
+# 4. Document IMMEDIATELY after install
+# 5. Commit documentation
+```
+
 ## Conclusion
 
-The biggest lesson: **Listen to user feedback, use available resources, show real results.**
+The biggest lesson: **Listen to user feedback, use available resources, show real results, DOCUMENT EVERYTHING.**
 
 Don't:
 - Defend flawed approaches
 - Use mock when real is available
 - Claim success without proof
 - Build complex systems on broken foundations
+- **Install things without checking if already installed**
+- **Make changes without documenting them**
 
 Do:
 - Review systematically
@@ -331,9 +417,12 @@ Do:
 - Show visible verification
 - Be honest about limitations
 - Update documentation
+- **Check CURRENT_STATE.md before any action**
+- **Document actions immediately after completing them**
+- **Commit documentation updates**
 
 ---
 
 **Add to this file when you learn something new.**
 
-Last Updated: 2025-11-15
+Last Updated: 2025-11-15 19:25 UTC

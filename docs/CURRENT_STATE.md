@@ -126,6 +126,21 @@ Expected: No critical issues
 
 ## Recent Changes
 
+### 2025-11-15 19:25 UTC - DOCUMENTATION UPDATE ⚠️
+- ⚠️ **CRITICAL:** Ollama was installed 5+ times in separate sessions
+- ⚠️ **ISSUE:** Not checking if already installed before reinstalling
+- ✅ **FIXED:** Added documentation requirement to LESSONS_LEARNED.md
+- ✅ **FIXED:** Updated CURRENT_STATE.md to track installations
+- 📝 **NEW RULE:** Always check docs/CURRENT_STATE.md before installations
+- 📝 **NEW RULE:** Document actions immediately after completing them
+
+### 2025-11-15 19:20 UTC - Session Restart
+- ✅ Ollama already installed (from previous session)
+- ✅ qwen2.5:0.5b model already pulled (397MB)
+- ✅ Agents running successfully with real Ollama
+- ✅ Production output verified (3 agents processing tasks)
+- ⚠️ Did NOT need to reinstall (was already there)
+
 ### 2025-11-15 19:00 UTC
 - ✅ Installed Ollama locally
 - ✅ Pulled qwen2.5:0.5b model
