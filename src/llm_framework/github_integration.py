@@ -23,10 +23,7 @@ class GitHubIntegration:
         self.base_url = "https://api.github.com"
 
     def create_issue(
-        self,
-        title: str,
-        body: str,
-        labels: Optional[list] = None
+        self, title: str, body: str, labels: Optional[list] = None
     ) -> Optional[Dict[str, Any]]:
         """
         Create a GitHub issue with agent prompt.
@@ -45,13 +42,10 @@ class GitHubIntegration:
         url = f"{self.base_url}/repos/{self.repo_owner}/{self.repo_name}/issues"
         headers = {
             "Authorization": f"token {self.token}",
-            "Accept": "application/vnd.github.v3+json"
+            "Accept": "application/vnd.github.v3+json",
         }
 
-        data = {
-            "title": title,
-            "body": body
-        }
+        data = {"title": title, "body": body}
 
         if labels:
             data["labels"] = labels
@@ -63,11 +57,7 @@ class GitHubIntegration:
         except requests.exceptions.RequestException:
             return None
 
-    def create_comment(
-        self,
-        issue_number: int,
-        comment: str
-    ) -> Optional[Dict[str, Any]]:
+    def create_comment(self, issue_number: int, comment: str) -> Optional[Dict[str, Any]]:
         """
         Create a comment on a GitHub issue.
 
@@ -87,7 +77,7 @@ class GitHubIntegration:
         )
         headers = {
             "Authorization": f"token {self.token}",
-            "Accept": "application/vnd.github.v3+json"
+            "Accept": "application/vnd.github.v3+json",
         }
 
         data = {"body": comment}
@@ -100,10 +90,7 @@ class GitHubIntegration:
             return None
 
     def send_copilot_prompt(
-        self,
-        prompt: str,
-        agent_name: str,
-        issue_number: Optional[int] = None
+        self, prompt: str, agent_name: str, issue_number: Optional[int] = None
     ) -> Optional[Dict[str, Any]]:
         """
         Send a prompt to Copilot via GitHub issue or comment.
@@ -123,20 +110,14 @@ class GitHubIntegration:
 
         title = f"Agent Request from {agent_name}"
         return self.create_issue(
-            title=title,
-            body=formatted_prompt,
-            labels=["agent-request", "copilot"]
+            title=title, body=formatted_prompt, labels=["agent-request", "copilot"]
         )
 
 
 class AgentGitHubBridge:
     """Bridge to connect agents with GitHub for Copilot communication."""
 
-    def __init__(
-        self,
-        github_integration: GitHubIntegration,
-        issue_number: Optional[int] = None
-    ):
+    def __init__(self, github_integration: GitHubIntegration, issue_number: Optional[int] = None):
         """
         Initialize the bridge.
 

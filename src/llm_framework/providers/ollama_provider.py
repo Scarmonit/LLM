@@ -9,12 +9,7 @@ from ..core.base_provider import BaseProvider
 class OllamaProvider(BaseProvider):
     """Provider for Ollama local LLM models."""
 
-    def __init__(
-        self,
-        model: str = "qwen2.5:0.5b",
-        base_url: Optional[str] = None,
-        **kwargs
-    ):
+    def __init__(self, model: str = "qwen2.5:0.5b", base_url: Optional[str] = None, **kwargs):
         """
         Initialize Ollama provider.
 
@@ -55,9 +50,9 @@ class OllamaProvider(BaseProvider):
                     "options": {
                         "temperature": temperature,
                         "num_predict": max_tokens,
-                    }
+                    },
                 },
-                timeout=60  # Increased for CPU
+                timeout=60,  # Increased for CPU
             )
 
             response.raise_for_status()

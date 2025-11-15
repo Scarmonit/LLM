@@ -2,8 +2,7 @@
 Intelligent mock provider that generates contextual responses.
 Used ONLY when no real LLM is available (testing/demo).
 """
-import re
-from typing import Dict, Any
+
 from llm_framework.core.base_provider import BaseProvider
 
 
@@ -12,67 +11,83 @@ class IntelligentMockProvider(BaseProvider):
     Mock provider that generates intelligent, contextual responses.
     This is NOT random - it analyzes the prompt and generates appropriate responses.
     """
-    
+
     def __init__(self):
         super().__init__(api_key=None)
-        
+
     def generate(self, prompt: str, **kwargs) -> str:
         """
         Generate a contextual response based on prompt analysis.
         """
         prompt_lower = prompt.lower()
-        
+
         # Code analysis responses
-        if 'analyze' in prompt_lower and ('code' in prompt_lower or 'function' in prompt_lower or 'def ' in prompt):
+        if "analyze" in prompt_lower and (
+            "code" in prompt_lower or "function" in prompt_lower or "def " in prompt
+        ):
             return self._analyze_code(prompt)
-            
+
         # Documentation responses
-        if 'document' in prompt_lower or 'docstring' in prompt_lower:
+        if "document" in prompt_lower or "docstring" in prompt_lower:
             return self._suggest_documentation(prompt)
-            
+
         # Test-related responses
-        if 'test' in prompt_lower and ('coverage' in prompt_lower or 'suggest' in prompt_lower):
+        if "test" in prompt_lower and ("coverage" in prompt_lower or "suggest" in prompt_lower):
             return self._suggest_tests(prompt)
-            
+
         # README/documentation improvement
-        if 'readme' in prompt_lower or ('improve' in prompt_lower and 'documentation' in prompt_lower):
+        if "readme" in prompt_lower or (
+            "improve" in prompt_lower and "documentation" in prompt_lower
+        ):
             return self._improve_readme(prompt)
-            
+
         # Default: explain what was asked
         return f"Analysis of request: {prompt[:100]}...\n\nBased on the content provided, here are key observations and recommendations for improvement."
-        
+
     def _analyze_code(self, prompt: str) -> str:
         """Analyze code and suggest improvements."""
         issues = []
-        
-        if 'eval(' in prompt:
-            issues.append("Security Risk: Using eval() is dangerous - it executes arbitrary code. Use ast.literal_eval() or json.loads() instead.")
-            
-        if 'except:' in prompt or 'except Exception:' in prompt:
-            issues.append("Error Handling: Bare except clauses catch all exceptions. Be more specific about which exceptions to catch.")
-            
-        if '//' in prompt and 'SELECT' in prompt.upper():
-            issues.append("SQL Injection Risk: String formatting in SQL queries is vulnerable. Use parameterized queries instead.")
-            
-        if 'def ' in prompt and '"""' not in prompt:
-            issues.append("Missing Documentation: Functions should have docstrings explaining parameters, return values, and purpose.")
-            
-        if '/ b' in prompt or '/ 0' in prompt:
-            issues.append("Division Error Risk: No error handling for division by zero. Add validation or try/except.")
-            
+
+        if "eval(" in prompt:
+            issues.append(
+                "Security Risk: Using eval() is dangerous - it executes arbitrary code. Use ast.literal_eval() or json.loads() instead."
+            )
+
+        if "except:" in prompt or "except Exception:" in prompt:
+            issues.append(
+                "Error Handling: Bare except clauses catch all exceptions. Be more specific about which exceptions to catch."
+            )
+
+        if "//" in prompt and "SELECT" in prompt.upper():
+            issues.append(
+                "SQL Injection Risk: String formatting in SQL queries is vulnerable. Use parameterized queries instead."
+            )
+
+        if "def " in prompt and '"""' not in prompt:
+            issues.append(
+                "Missing Documentation: Functions should have docstrings explaining parameters, return values, and purpose."
+            )
+
+        if "/ b" in prompt or "/ 0" in prompt:
+            issues.append(
+                "Division Error Risk: No error handling for division by zero. Add validation or try/except."
+            )
+
         if not issues:
-            issues.append("Code Quality: Consider adding type hints, error handling, and comprehensive documentation.")
+            issues.append(
+                "Code Quality: Consider adding type hints, error handling, and comprehensive documentation."
+            )
             issues.append("Testing: Ensure this code has unit tests covering edge cases.")
-            
+
         response = "Code Analysis Results:\n\n"
         for i, issue in enumerate(issues, 1):
             response += f"{i}. {issue}\n\n"
-            
+
         response += "Recommendations:\n- Add input validation\n- Implement proper error handling\n- Write comprehensive tests\n- Add detailed docstrings"
-        
+
         return response
-        
-    def _suggest_documentation(self, prompt: str) -> str:
+
+    def _suggest_documentation(self, _prompt: str) -> str:
         """Suggest documentation improvements."""
         return """Documentation Suggestions:
 
@@ -115,7 +130,7 @@ def process_data(items: list) -> dict:
     \"\"\"
 ```"""
 
-    def _suggest_tests(self, prompt: str) -> str:
+    def _suggest_tests(self, _prompt: str) -> str:
         """Suggest test improvements."""
         return """Test Suite Recommendations:
 
@@ -155,7 +170,7 @@ def test_divide_numbers_zero_division():
         divide_numbers(10, 0)
 ```"""
 
-    def _improve_readme(self, prompt: str) -> str:
+    def _improve_readme(self, _prompt: str) -> str:
         """Suggest README improvements."""
         return """README Improvement Suggestions:
 
@@ -199,7 +214,7 @@ A good README answers: What, Why, How, and Who."""
     def is_available(self) -> bool:
         """Always available as fallback."""
         return True
-        
+
     def get_provider_name(self) -> str:
         """Return provider name."""
         return "Intelligent Mock (contextual responses)"
