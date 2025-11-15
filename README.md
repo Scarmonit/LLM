@@ -27,6 +27,22 @@ cd LLM
 pip install -r requirements.txt
 ```
 
+## Development Environment
+
+This repository includes a DevContainer configuration for use with VS Code or GitHub Codespaces. The devcontainer is pre-configured with:
+- Python 3.11
+- Node.js 20
+- GitHub CLI
+- GitHub Copilot with MCP (Model Context Protocol) servers
+
+### MCP Servers
+
+The following MCP servers are configured for enhanced GitHub Copilot capabilities:
+- **playwright**: Browser automation and testing capabilities
+- **github-mcp-server**: Enhanced GitHub repository operations and workflows
+
+These servers are automatically started when you open the project in a DevContainer and provide GitHub Copilot with additional tools for browser automation and advanced Git operations.
+
 ## Quick Start
 
 ### Using Claude Provider
