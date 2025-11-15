@@ -249,7 +249,7 @@ This document compiles official documented resources on environment restrictions
 **Official Documentation:**
 - POSIX ulimit: https://pubs.opengroup.org/onlinepubs/9799919799.2024edition/utilities/ulimit.html
 - getrlimit(2) Manual: https://man7.org/linux/man-pages/man2/getrlimit.2.html
-- GNU C Library: https://www.gnu.org/software/libc/manual/html_node//Limits-on-Resources.html
+- GNU C Library: https://www.gnu.org/software/libc/manual/html_node/Limits-on-Resources.html
 
 **Key Features:**
 - Soft and hard limits
