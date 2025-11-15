@@ -97,5 +97,5 @@ def test_orchestrator_setup_default_agents_no_provider():
     """Test that setup_default_agents raises error without providers."""
     orchestrator = AgentOrchestrator()
 
-    with pytest.raises(RuntimeError, match="No providers available"):
+    with pytest.raises(RuntimeError, match="No REAL LLM providers available"):
         orchestrator.setup_default_agents()
