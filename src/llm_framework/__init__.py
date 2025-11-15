@@ -7,6 +7,8 @@ from .core.base_provider import BaseProvider
 from .core.agent import Agent, AgentConfig
 from .providers.claude_provider import ClaudeProvider
 from .providers.ollama_provider import OllamaProvider
+from .continuous_agent import ContinuousAgent
+from .github_integration import GitHubIntegration, AgentGitHubBridge
 
 __all__ = [
     "BaseProvider",
@@ -14,4 +16,7 @@ __all__ = [
     "AgentConfig",
     "ClaudeProvider",
     "OllamaProvider",
+    "ContinuousAgent",
+    "GitHubIntegration",
+    "AgentGitHubBridge",
 ]

@@ -1,6 +1,6 @@
 # LLM Multi-Provider Framework
 
-Autonomous AI orchestration system with support for multiple LLM providers including Claude and Ollama.
+Autonomous AI orchestration system with support for multiple LLM providers including Claude and Ollama, featuring continuous agent execution and GitHub Copilot integration.
 
 ## Features
 
@@ -9,6 +9,8 @@ Autonomous AI orchestration system with support for multiple LLM providers inclu
   - Research Agent: Information gathering and analysis
   - Coding Agent: Software development assistance
   - Writing Agent: Content creation and editing
+- **Continuous Execution**: Agents can run continuously, processing task queues autonomously
+- **GitHub Integration**: Agents can send prompts and results to GitHub Copilot via issues/comments
 - **Extensible Architecture**: Easy to add custom providers and agents
 - **Provider Abstraction**: Unified interface across different LLM backends
 
@@ -45,17 +47,44 @@ ollama pull llama2
 # Ollama server runs on http://localhost:11434 by default
 ```
 
-### Running the Example
+### Running a Single Agent
 
 ```bash
 python example.py
 ```
 
+### Running Continuous Agents
+
+Run agents continuously with automatic task processing:
+
+```bash
+# Run all agents continuously
+python run_continuous.py --agent all --interval 60
+
+# Run specific agent
+python run_continuous.py --agent research --interval 30
+
+# With GitHub integration
+export GITHUB_REPO_OWNER=your-username
+export GITHUB_REPO_NAME=your-repo
+export GITHUB_TOKEN=your-github-token
+python run_continuous.py --agent all --issue-number 123
+```
+
+Options:
+- `--agent`: Choose which agent to run (`research`, `coding`, `writing`, or `all`)
+- `--interval`: Time between task checks in seconds (default: 60)
+- `--max-iterations`: Maximum iterations before stopping (default: unlimited)
+- `--repo-owner`: GitHub repository owner
+- `--repo-name`: GitHub repository name
+- `--issue-number`: GitHub issue number for threaded conversation
+
 ## Usage
+
+### Basic Usage
 
 ```python
 from llm_framework.orchestrator import AgentOrchestrator
-from llm_framework.providers.claude_provider import ClaudeProvider
 
 # Create orchestrator
 orchestrator = AgentOrchestrator()
@@ -71,6 +100,59 @@ research_agent = orchestrator.get_agent("research")
 result = research_agent.execute("What are the latest AI trends?")
 print(result)
 ```
+
+### Continuous Agent Execution
+
+```python
+from llm_framework.orchestrator import AgentOrchestrator
+from llm_framework.continuous_agent import ContinuousAgent
+
+# Set up orchestrator
+orchestrator = AgentOrchestrator()
+orchestrator.setup_default_providers()
+orchestrator.setup_default_agents()
+
+# Get an agent
+agent = orchestrator.get_agent("research")
+
+# Create continuous agent
+continuous = ContinuousAgent(agent, interval=60)
+
+# Add tasks to the queue
+continuous.add_task("Research quantum computing")
+continuous.add_task("Analyze market trends in AI")
+
+# Start continuous execution
+continuous.start()
+
+# Check status
+status = continuous.get_status()
+print(f"Running: {status['is_running']}, Iterations: {status['iteration_count']}")
+
+# Stop when done
+continuous.stop()
+```
+
+### GitHub Integration
+
+```python
+from llm_framework.github_integration import GitHubIntegration, AgentGitHubBridge
+from llm_framework.continuous_agent import ContinuousAgent
+
+# Set up GitHub integration
+github = GitHubIntegration("your-username", "your-repo")
+bridge = AgentGitHubBridge(github, issue_number=123)
+
+# Set up continuous agent with GitHub callback
+continuous = ContinuousAgent(agent, interval=60)
+continuous.on_result_callback = bridge  # Results sent to GitHub
+
+# Add tasks and start
+continuous.add_task("Research AI ethics")
+continuous.start()
+```
+
+The agent will automatically send task results to the specified GitHub issue, mentioning @copilot for review.
 
 ## Creating Custom Agents
 
@@ -101,14 +183,25 @@ pytest tests/
 LLM/
 ├── src/
 │   └── llm_framework/
-│       ├── core/           # Core framework components
-│       ├── providers/      # LLM provider implementations
-│       ├── agents/         # Pre-built agent implementations
-│       └── orchestrator.py # Agent orchestration
-├── tests/                  # Unit tests
-├── example.py             # Example usage
-└── requirements.txt       # Python dependencies
+│       ├── core/                  # Core framework components
+│       ├── providers/             # LLM provider implementations
+│       ├── agents/                # Pre-built agent implementations
+│       ├── orchestrator.py        # Agent orchestration
+│       ├── continuous_agent.py    # Continuous execution support
+│       └── github_integration.py  # GitHub Copilot integration
+├── tests/                         # Unit tests
+├── example.py                     # Basic example
+├── run_continuous.py              # Continuous agent runner
+└── requirements.txt               # Python dependencies
 ```
+
+## Environment Variables
+
+- `ANTHROPIC_API_KEY`: API key for Claude provider
+- `OLLAMA_BASE_URL`: Ollama server URL (default: http://localhost:11434)
+- `GITHUB_TOKEN`: GitHub personal access token for integration
+- `GITHUB_REPO_OWNER`: Repository owner for GitHub integration
+- `GITHUB_REPO_NAME`: Repository name for GitHub integration
 
 ## License
 
