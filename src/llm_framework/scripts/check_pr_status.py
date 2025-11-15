@@ -46,7 +46,15 @@ def main():
 
     # Output for GitHub Actions
     ready = validation["valid"]
-    print(f"::set-output name=ready::{str(ready).lower()}")
+
+    # Write output to GITHUB_OUTPUT environment file (modern approach)
+    github_output = os.getenv("GITHUB_OUTPUT")
+    if github_output:
+        with open(github_output, "a", encoding="utf-8") as f:
+            f.write(f"ready={str(ready).lower()}\n")
+    else:
+        # Fallback for local testing
+        print(f"ready={str(ready).lower()}")
 
     # Save validation details
     with open("pr_validation.json", "w", encoding="utf-8") as f:
