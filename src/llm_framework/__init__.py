@@ -1,0 +1,17 @@
+"""LLM Multi-Provider Framework - Core package initialization."""
+
+__version__ = "0.1.0"
+__author__ = "LLM Framework Team"
+
+from .core.base_provider import BaseProvider
+from .core.agent import Agent, AgentConfig
+from .providers.claude_provider import ClaudeProvider
+from .providers.ollama_provider import OllamaProvider
+
+__all__ = [
+    "BaseProvider",
+    "Agent",
+    "AgentConfig",
+    "ClaudeProvider",
+    "OllamaProvider",
+]
