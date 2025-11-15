@@ -1,0 +1,22 @@
+[Unit]
+Description=LLM Multi-Provider Framework - Continuous Agents
+After=network.target
+
+[Service]
+Type=simple
+User=llm-agent
+WorkingDirectory=/opt/llm-framework
+Environment="PYTHONUNBUFFERED=1"
+EnvironmentFile=/etc/llm-framework/env.conf
+ExecStart=/usr/bin/python3 /opt/llm-framework/run_continuous.py --agent all --interval 60
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
