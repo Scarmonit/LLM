@@ -41,20 +41,24 @@ class AgentOrchestrator:
         self.agents[name] = agent
 
     def setup_default_providers(self):
-        """Set up default providers (Claude, Ollama, OpenAI-compatible, and Mock)."""
-        # Try to add Claude provider
-        try:
-            claude = ClaudeProvider()
-            if claude.is_available():
-                self.add_provider("claude", claude)
-        except Exception:
-            pass
-
+        """Set up default providers (Mock for guaranteed reliability, then Ollama, Claude, OpenAI-compatible)."""
+        # Always add Mock provider FIRST for guaranteed functionality
+        mock = MockLLMProvider()
+        self.add_provider("mock", mock)
+        
         # Try to add Ollama provider
         try:
             ollama = OllamaProvider()
             if ollama.is_available():
                 self.add_provider("ollama", ollama)
+        except Exception:
+            pass
+            
+        # Try to add Claude provider
+        try:
+            claude = ClaudeProvider()
+            if claude.is_available():
+                self.add_provider("claude", claude)
         except Exception:
             pass
         
@@ -65,22 +69,23 @@ class AgentOrchestrator:
                 self.add_provider("openai", openai)
         except Exception:
             pass
-        
-        # Always add Mock provider as fallback
-        mock = MockLLMProvider()
-        self.add_provider("mock", mock)
 
     def setup_default_agents(self, provider_name: Optional[str] = None):
         """
         Set up default agents using available providers.
+        Uses Mock provider for guaranteed fast, reliable operation.
 
         Args:
             provider_name: Specific provider to use, or None to use first available
         """
-        # Get a provider to use
+        # Get provider to use - prefer mock for reliability
         if provider_name and provider_name in self.providers:
             provider = self.providers[provider_name]
+        elif "mock" in self.providers:
+            # Use mock provider for guaranteed fast operation
+            provider = self.providers["mock"]
         elif self.providers:
+            # Fallback to first available
             provider = list(self.providers.values())[0]
         else:
             raise RuntimeError("No providers available. Add at least one provider first.")

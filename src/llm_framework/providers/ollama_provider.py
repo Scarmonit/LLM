@@ -11,7 +11,7 @@ class OllamaProvider(BaseProvider):
 
     def __init__(
         self,
-        model: str = "llama2",
+        model: str = "qwen2.5:0.5b",
         base_url: Optional[str] = None,
         **kwargs
     ):

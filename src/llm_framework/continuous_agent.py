@@ -68,6 +68,10 @@ class ContinuousAgent:
                 self.is_running = False
                 break
 
+            # If queue is empty, add a new task to keep agent busy
+            if not self.task_queue:
+                self._generate_task()
+
             # Process tasks from queue
             if self.task_queue:
                 task = self.task_queue.pop(0)
@@ -98,6 +102,47 @@ class ContinuousAgent:
 
             # Wait before next iteration
             time.sleep(self.interval)
+    
+    def _generate_task(self):
+        """Generate a new task based on agent type to keep it busy."""
+        agent_name = self.agent.config.name.lower()
+        
+        # Task templates based on agent type
+        if "research" in agent_name:
+            tasks = [
+                "Analyze current trends in artificial intelligence",
+                "Research the latest developments in machine learning",
+                "Investigate best practices for AI model deployment",
+                "Study the impact of AI on various industries",
+                "Examine emerging AI technologies and their applications"
+            ]
+        elif "coding" in agent_name:
+            tasks = [
+                "Design a function for data processing",
+                "Optimize an algorithm for better performance",
+                "Create a code structure for a web service",
+                "Develop a solution for error handling",
+                "Implement a pattern for asynchronous operations"
+            ]
+        elif "writing" in agent_name:
+            tasks = [
+                "Compose a technical blog post introduction",
+                "Write about the future of autonomous systems",
+                "Create content about AI innovation",
+                "Draft an article on technology trends",
+                "Develop messaging for AI-powered solutions"
+            ]
+        else:
+            tasks = [
+                "Analyze a complex problem",
+                "Provide insights on current technology",
+                "Explore innovative solutions"
+            ]
+        
+        # Rotate through tasks
+        import random
+        task = random.choice(tasks)
+        self.task_queue.append(task)
 
     def get_results(self) -> List[Dict[str, Any]]:
         """
