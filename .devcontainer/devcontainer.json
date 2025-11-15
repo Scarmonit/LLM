@@ -32,6 +32,16 @@
         "editor.formatOnSave": true,
         "editor.codeActionsOnSave": {
           "source.organizeImports": true
+        },
+        "github.copilot.chat.mcp.servers": {
+          "playwright": {
+            "command": "npx",
+            "args": ["-y", "@playwright/mcp"]
+          },
+          "github-mcp-server": {
+            "command": "npx",
+            "args": ["-y", "github-mcp-server"]
+          }
         }
       }
     }
