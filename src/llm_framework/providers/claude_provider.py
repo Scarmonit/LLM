@@ -9,10 +9,7 @@ class ClaudeProvider(BaseProvider):
     """Provider for Claude AI models via Anthropic API."""
 
     def __init__(
-        self,
-        api_key: Optional[str] = None,
-        model: str = "claude-3-sonnet-20240229",
-        **kwargs
+        self, api_key: Optional[str] = None, model: str = "claude-3-sonnet-20240229", **kwargs
     ):
         """
         Initialize Claude provider.
@@ -31,6 +28,7 @@ class ClaudeProvider(BaseProvider):
         if self._client is None and self.api_key:
             try:
                 import anthropic
+
                 self._client = anthropic.Anthropic(api_key=self.api_key)
             except ImportError as exc:
                 raise ImportError(
@@ -63,10 +61,7 @@ class ClaudeProvider(BaseProvider):
                 model=self.model,
                 max_tokens=max_tokens,
                 temperature=temperature,
-                messages=[{
-                    "role": "user",
-                    "content": prompt
-                }]
+                messages=[{"role": "user", "content": prompt}],
             )
 
             return response.content[0].text

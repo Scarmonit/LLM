@@ -6,7 +6,6 @@ from .core.agent import Agent
 from .core.base_provider import BaseProvider
 from .providers.claude_provider import ClaudeProvider
 from .providers.ollama_provider import OllamaProvider
-from .providers.mock_provider import MockLLMProvider
 from .providers.openai_compatible_provider import OpenAICompatibleProvider
 from .agents.research_agent import ResearchAgent
 from .agents.coding_agent import CodingAgent
@@ -54,7 +53,7 @@ class AgentOrchestrator:
                 return  # Found real provider, done
         except Exception:
             pass
-        
+
         # Try Claude API (only if API key is set)
         if os.getenv("ANTHROPIC_API_KEY"):
             try:
@@ -64,7 +63,7 @@ class AgentOrchestrator:
                     return  # Found real provider, done
             except Exception:
                 pass
-        
+
         # Try OpenAI-compatible API (ONLY if API key is explicitly set)
         if os.getenv("OPENAI_API_KEY"):
             try:
@@ -74,11 +73,12 @@ class AgentOrchestrator:
                     return  # Found real provider, done
             except Exception:
                 pass
-        
+
         # Fallback to intelligent mock (for testing/demo when no real LLM available)
         # This provides contextual responses, not random data
         try:
             from llm_framework.providers.intelligent_mock_provider import IntelligentMockProvider
+
             mock = IntelligentMockProvider()
             self.add_provider("intelligent_mock", mock)
             print("⚠️  Using Intelligent Mock Provider (no real LLM available)")
@@ -86,7 +86,7 @@ class AgentOrchestrator:
             return
         except Exception:
             pass
-        
+
         # NO providers at all
         if not self.providers:
             raise RuntimeError(
@@ -111,7 +111,9 @@ class AgentOrchestrator:
             # Use first available REAL provider
             provider = list(self.providers.values())[0]
         else:
-            raise RuntimeError("No REAL LLM providers available. Cannot create agents without real providers.")
+            raise RuntimeError(
+                "No REAL LLM providers available. Cannot create agents without real providers."
+            )
 
         # Create default agents with REAL LLM
         self.add_agent("research", ResearchAgent.create_default(provider))
@@ -169,14 +171,8 @@ class AgentOrchestrator:
         """
         return {
             "providers": {
-                name: {
-                    "name": provider.get_provider_name(),
-                    "available": provider.is_available()
-                }
+                name: {"name": provider.get_provider_name(), "available": provider.is_available()}
                 for name, provider in self.providers.items()
             },
-            "agents": {
-                name: agent.get_status()
-                for name, agent in self.agents.items()
-            }
+            "agents": {name: agent.get_status() for name, agent in self.agents.items()},
         }

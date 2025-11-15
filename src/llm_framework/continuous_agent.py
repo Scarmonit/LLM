@@ -15,7 +15,7 @@ class ContinuousAgent:
         agent: Agent,
         task_queue: Optional[List[str]] = None,
         interval: int = 60,
-        max_iterations: Optional[int] = None
+        max_iterations: Optional[int] = None,
     ):
         """
         Initialize continuous agent.
@@ -78,34 +78,38 @@ class ContinuousAgent:
                     result = self.agent.execute(task)
 
                     # Store result
-                    self.results_history.append({
-                        "timestamp": datetime.now().isoformat(),
-                        "task": task,
-                        "result": result,
-                        "iteration": self.iteration_count
-                    })
+                    self.results_history.append(
+                        {
+                            "timestamp": datetime.now().isoformat(),
+                            "task": task,
+                            "result": result,
+                            "iteration": self.iteration_count,
+                        }
+                    )
 
                     # Call callback if set
                     if self.on_result_callback:
                         self.on_result_callback(task, result)
 
                 except Exception as e:
-                    self.results_history.append({
-                        "timestamp": datetime.now().isoformat(),
-                        "task": task,
-                        "error": str(e),
-                        "iteration": self.iteration_count
-                    })
+                    self.results_history.append(
+                        {
+                            "timestamp": datetime.now().isoformat(),
+                            "task": task,
+                            "error": str(e),
+                            "iteration": self.iteration_count,
+                        }
+                    )
 
                 self.iteration_count += 1
 
             # Minimal wait before next iteration (always busy)
             time.sleep(self.interval)
-    
+
     def _generate_task(self):
         """Generate a new task based on agent type to keep it busy."""
         agent_name = self.agent.config.name.lower()
-        
+
         # Task templates based on agent type
         if "research" in agent_name:
             tasks = [
@@ -113,7 +117,7 @@ class ContinuousAgent:
                 "Research the latest developments in machine learning",
                 "Investigate best practices for AI model deployment",
                 "Study the impact of AI on various industries",
-                "Examine emerging AI technologies and their applications"
+                "Examine emerging AI technologies and their applications",
             ]
         elif "coding" in agent_name:
             tasks = [
@@ -121,7 +125,7 @@ class ContinuousAgent:
                 "Optimize an algorithm for better performance",
                 "Create a code structure for a web service",
                 "Develop a solution for error handling",
-                "Implement a pattern for asynchronous operations"
+                "Implement a pattern for asynchronous operations",
             ]
         elif "writing" in agent_name:
             tasks = [
@@ -129,17 +133,18 @@ class ContinuousAgent:
                 "Write about the future of autonomous systems",
                 "Create content about AI innovation",
                 "Draft an article on technology trends",
-                "Develop messaging for AI-powered solutions"
+                "Develop messaging for AI-powered solutions",
             ]
         else:
             tasks = [
                 "Analyze a complex problem",
                 "Provide insights on current technology",
-                "Explore innovative solutions"
+                "Explore innovative solutions",
             ]
-        
+
         # Rotate through tasks
         import random
+
         task = random.choice(tasks)
         self.task_queue.append(task)
 
@@ -166,5 +171,5 @@ class ContinuousAgent:
             "tasks_pending": len(self.task_queue),
             "results_count": len(self.results_history),
             "max_iterations": self.max_iterations,
-            "interval": self.interval
+            "interval": self.interval,
         }

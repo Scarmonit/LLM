@@ -44,9 +44,7 @@ class Agent:
             The result of the task execution
         """
         if not self.provider.is_available():
-            raise RuntimeError(
-                f"Provider {self.provider.get_provider_name()} is not available"
-            )
+            raise RuntimeError(f"Provider {self.provider.get_provider_name()} is not available")
 
         # Build the full prompt
         full_prompt = self._build_prompt(task, context)
@@ -54,20 +52,12 @@ class Agent:
         # Generate response
         try:
             response = self.provider.generate(
-                full_prompt,
-                temperature=self.config.temperature,
-                **self.config.additional_params
+                full_prompt, temperature=self.config.temperature, **self.config.additional_params
             )
 
             # Store in conversation history
-            self.conversation_history.append({
-                "role": "user",
-                "content": task
-            })
-            self.conversation_history.append({
-                "role": "assistant",
-                "content": response
-            })
+            self.conversation_history.append({"role": "user", "content": task})
+            self.conversation_history.append({"role": "assistant", "content": response})
 
             return response
         except Exception as e:
@@ -115,5 +105,5 @@ class Agent:
             "config": {
                 "max_iterations": self.config.max_iterations,
                 "temperature": self.config.temperature,
-            }
+            },
         }
