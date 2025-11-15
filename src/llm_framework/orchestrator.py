@@ -5,6 +5,8 @@ from .core.agent import Agent
 from .core.base_provider import BaseProvider
 from .providers.claude_provider import ClaudeProvider
 from .providers.ollama_provider import OllamaProvider
+from .providers.mock_provider import MockLLMProvider
+from .providers.openai_compatible_provider import OpenAICompatibleProvider
 from .agents.research_agent import ResearchAgent
 from .agents.coding_agent import CodingAgent
 from .agents.writing_agent import WritingAgent
@@ -39,7 +41,7 @@ class AgentOrchestrator:
         self.agents[name] = agent
 
     def setup_default_providers(self):
-        """Set up default providers (Claude and Ollama)."""
+        """Set up default providers (Claude, Ollama, OpenAI-compatible, and Mock)."""
         # Try to add Claude provider
         try:
             claude = ClaudeProvider()
@@ -55,6 +57,18 @@ class AgentOrchestrator:
                 self.add_provider("ollama", ollama)
         except Exception:
             pass
+        
+        # Try to add OpenAI-compatible provider
+        try:
+            openai = OpenAICompatibleProvider()
+            if openai.is_available():
+                self.add_provider("openai", openai)
+        except Exception:
+            pass
+        
+        # Always add Mock provider as fallback
+        mock = MockLLMProvider()
+        self.add_provider("mock", mock)
 
     def setup_default_agents(self, provider_name: Optional[str] = None):
         """

@@ -203,6 +203,39 @@ LLM/
 - `GITHUB_REPO_OWNER`: Repository owner for GitHub integration
 - `GITHUB_REPO_NAME`: Repository name for GitHub integration
 
+## Always-Running Deployment
+
+To ensure agents are **always running** in production, see the [Deployment Guide](deployment/DEPLOYMENT.md) for multiple options:
+
+### Quick Deploy Options
+
+**Docker (Recommended):**
+```bash
+cp .env.example .env  # Configure your API keys
+docker-compose up -d
+```
+
+**Linux systemd:**
+```bash
+sudo deployment/systemd/install.sh
+sudo systemctl enable llm-agents
+sudo systemctl start llm-agents
+```
+
+**PM2 (Cross-platform):**
+```bash
+pm2 start deployment/pm2/ecosystem.config.json
+pm2 save && pm2 startup
+```
+
+All options include:
+- ✅ Automatic restart on failure
+- ✅ Auto-start on system boot
+- ✅ Log management
+- ✅ Process monitoring
+
+See [deployment/DEPLOYMENT.md](deployment/DEPLOYMENT.md) for complete instructions.
+
 ## License
 
 MIT License
