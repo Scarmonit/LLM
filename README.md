@@ -1,6 +1,6 @@
 # LLM Multi-Provider Framework
 
-Autonomous AI orchestration system with support for multiple LLM providers including Claude and Ollama, featuring continuous agent execution and GitHub Copilot integration.
+Autonomous AI orchestration system with support for multiple LLM providers including Claude and Ollama, featuring continuous agent execution, GitHub Copilot integration, and automated PR management.
 
 ## Features
 
@@ -9,10 +9,41 @@ Autonomous AI orchestration system with support for multiple LLM providers inclu
   - Research Agent: Information gathering and analysis
   - Coding Agent: Software development assistance
   - Writing Agent: Content creation and editing
+  - Code Review Agent: ✨ NEW - Automated PR code review
 - **Continuous Execution**: Agents can run continuously, processing task queues autonomously
-- **GitHub Integration**: Agents can send prompts and results to GitHub Copilot via issues/comments
+- **GitHub Integration**: 
+  - Agents can send prompts and results to GitHub Copilot via issues/comments
+  - ✨ NEW - **PR Automation**: Auto-review, validate, create, and merge pull requests
 - **Extensible Architecture**: Easy to add custom providers and agents
 - **Provider Abstraction**: Unified interface across different LLM backends
+
+## ✨ NEW: GitHub PR Automation
+
+Automate your pull request workflow with AI-powered code review:
+
+- **Auto-Review**: Automatically review PRs when opened or updated
+- **Validation**: Check if PRs are ready to merge (checks, approvals, conflicts)
+- **Auto-Merge**: Merge PRs automatically when all conditions are met
+- **PR Creation**: Create pull requests programmatically
+
+See [PR Automation Documentation](docs/PR_AUTOMATION.md) for detailed guide.
+
+### Quick Start with PR Automation
+
+```bash
+# Set environment variables
+export GITHUB_TOKEN=your_token
+export ANTHROPIC_API_KEY=your_key  # or use Ollama
+
+# Create a PR
+python -m llm_framework.scripts.create_pr \
+  --title "Add feature" --head feature-branch --base main
+
+# Review a PR
+python -m llm_framework.scripts.auto_review_pr --pr-number 123
+
+# Auto-merge when ready (add 'auto-merge' label to PR)
+```
 
 ## Installation
 
