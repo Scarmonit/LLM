@@ -25,6 +25,40 @@ This is an **LLM Multi-Provider Framework** with autonomous agent capabilities.
 - `src/llm_framework/orchestrator.py` - Agent management
 - `src/llm_framework/continuous_agent.py` - Continuous execution
 
+## Task Understanding & Scoping
+
+### Understanding the Task
+Before making ANY changes:
+1. **Read the issue description completely** - Understand what's being asked
+2. **Identify the problem statement** - What's broken or missing?
+3. **Review acceptance criteria** - What does "done" look like?
+4. **Check affected files** - Where will changes be needed?
+5. **Assess complexity** - Is this simple, medium, or complex?
+
+### Task Scoping Best Practices
+- ✅ **Well-scoped tasks** - Clear problem, specific solution, testable outcomes
+- ✅ **Focused changes** - Change only what's necessary to fix the issue
+- ✅ **Incremental approach** - Make small changes, test frequently
+- ❌ **Scope creep** - Don't add unrelated improvements
+- ❌ **Over-engineering** - Don't make changes more complex than needed
+- ❌ **Assumptions** - If unclear, ask for clarification
+
+### Types of Tasks You Excel At
+1. **Bug Fixes** - Clear reproduction, specific error, known solution
+2. **Feature Additions** - Well-defined requirements, clear acceptance criteria
+3. **Refactoring** - Improve code quality without changing behavior
+4. **Documentation** - Add or update documentation for clarity
+5. **Test Coverage** - Add tests for untested code paths
+
+### Types of Tasks That Need Clarification
+1. **Vague requirements** - "Make it better" without specifics
+2. **Ambiguous scope** - Unclear what should be changed
+3. **Missing acceptance criteria** - No definition of "done"
+4. **Contradictory requirements** - Conflicting instructions
+5. **Incomplete context** - Missing information to understand the problem
+
+**If task is unclear, ask for clarification before starting!**
+
 ## Critical Rules (DO NOT VIOLATE)
 
 ### 1. Use Available Resources FIRST
@@ -177,6 +211,7 @@ See `docs/CURRENT_STATE.md` for latest status.
 
 **Before starting work:**
 - `.github/copilot-instructions.md` (this file)
+- `CONTRIBUTING.md` - Contribution guidelines and best practices
 - `docs/LESSONS_LEARNED.md`
 - `docs/CURRENT_STATE.md`
 - `docs/ARCHITECTURE.md`
@@ -190,6 +225,39 @@ See `docs/CURRENT_STATE.md` for latest status.
 - Update all `docs/` files
 - Run full verification
 - Document what worked/failed
+
+## Working with Issue Templates
+
+This repository provides structured issue templates to ensure clear task delegation:
+
+### Available Templates
+1. **Bug Fix** (`.github/ISSUE_TEMPLATE/bug_fix.md`)
+   - For fixing broken functionality
+   - Requires: steps to reproduce, expected vs actual behavior
+   - Focus: Minimal fix, don't break existing code
+
+2. **Feature Request** (`.github/ISSUE_TEMPLATE/feature_request.md`)
+   - For adding new functionality
+   - Requires: user stories, acceptance criteria, examples
+   - Focus: Well-defined scope, comprehensive tests
+
+3. **Refactoring** (`.github/ISSUE_TEMPLATE/refactoring.md`)
+   - For improving code quality without changing behavior
+   - Requires: current problems, proposed improvements
+   - Focus: Maintain all existing tests, no breaking changes
+
+4. **Documentation** (`.github/ISSUE_TEMPLATE/documentation.md`)
+   - For adding or updating documentation
+   - Requires: what needs documenting, target audience
+   - Focus: Clarity, accuracy, practical examples
+
+### Using Templates Effectively
+When an issue uses a template:
+1. **Read all sections** - Don't skip any part of the template
+2. **Follow the structure** - Template guides your implementation
+3. **Check acceptance criteria** - These define when you're done
+4. **Update status** - Mark criteria as completed in PR description
+5. **Verify complexity** - If marked "complex", plan carefully
 
 ## Communication Protocol
 
@@ -210,13 +278,27 @@ See `docs/CURRENT_STATE.md` for latest status.
 ## Success Criteria
 
 Work is complete when:
-- ✅ All tests passing (30/30)
-- ✅ Real LLM provider working (not mock)
-- ✅ Agents running continuously
+- ✅ All tests passing (52/52 or more)
+- ✅ Real LLM provider working (not mock) for production features
+- ✅ Agents running continuously (if applicable)
 - ✅ Visible, verifiable output
 - ✅ Security scan clean (0 vulnerabilities)
 - ✅ Documentation updated
 - ✅ User can reproduce/verify results
+- ✅ All acceptance criteria from issue template met
+- ✅ PR template filled out completely
+- ✅ Code review feedback addressed
+
+## Pull Request Best Practices
+
+When creating PRs:
+1. **Use the PR template** (`.github/PULL_REQUEST_TEMPLATE/pull_request_template.md`)
+2. **Link to the issue** - Use "Fixes #123" to auto-close
+3. **Fill all sections** - Don't skip parts of the template
+4. **Show test results** - Paste actual test output
+5. **Document changes** - List all modified files and why
+6. **Update CURRENT_STATE.md** - Reflect new system status
+7. **Request review** - Add reviewers or let auto-review handle it
 
 ## Final Reminder
 

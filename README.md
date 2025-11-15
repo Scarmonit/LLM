@@ -2,6 +2,17 @@
 
 Autonomous AI orchestration system with support for multiple LLM providers including Claude and Ollama, featuring continuous agent execution, GitHub Copilot integration, and automated PR management.
 
+## ✨ Optimized for GitHub Copilot Coding Agent
+
+This repository is designed to work seamlessly with **GitHub Copilot coding agent** for autonomous task completion. We provide:
+
+- 📝 **Issue Templates** - Structured templates for bugs, features, refactoring, and documentation
+- 🤖 **Copilot Instructions** - Comprehensive guidelines in `.github/copilot-instructions.md`
+- ✅ **PR Templates** - Quality checklists for all pull requests
+- 📚 **Contributing Guide** - Best practices for task delegation and collaboration
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidance on creating Copilot-friendly issues and PRs.
+
 ## Features
 
 - **Multi-Provider Support**: Seamlessly switch between different LLM providers (Claude, Ollama)
@@ -282,6 +293,51 @@ All options include:
 - ✅ Process monitoring
 
 See [deployment/DEPLOYMENT.md](deployment/DEPLOYMENT.md) for complete instructions.
+
+## Contributing
+
+We welcome contributions! This project is optimized for GitHub Copilot coding agent.
+
+### Quick Start for Contributors
+
+1. **Read** [CONTRIBUTING.md](CONTRIBUTING.md) - Comprehensive guide for contributors
+2. **Use issue templates** - We provide templates for bugs, features, refactoring, and docs
+3. **Follow PR template** - Ensures quality and completeness
+4. **Work with Copilot** - Issues can be assigned to GitHub Copilot coding agent
+
+### Creating Issues for Copilot
+
+When delegating tasks to GitHub Copilot coding agent:
+
+✅ **Good issue example:**
+```markdown
+Title: [BUG] Timeout in OllamaProvider for large responses
+
+Problem: OllamaProvider fails with timeout when response >1000 tokens
+
+Acceptance Criteria:
+- Increase timeout to 120 seconds
+- Add retry logic
+- Add tests for timeout handling
+
+Affected Files: src/llm_framework/providers/ollama_provider.py
+```
+
+❌ **Poor issue example:**
+```markdown
+Title: Fix the timeouts
+
+The provider times out sometimes. Please fix.
+```
+
+### Issue Templates Available
+
+- 🐛 **Bug Fix** - For fixing broken functionality
+- ✨ **Feature Request** - For adding new capabilities  
+- 🔧 **Refactoring** - For code quality improvements
+- 📚 **Documentation** - For documentation updates
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
 ## License
 
