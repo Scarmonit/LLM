@@ -85,19 +85,21 @@ class OpenAICompatibleProvider(BaseProvider):
 
     def is_available(self) -> bool:
         """
-        Check if the provider is available.
+        Check if the provider is available (REQUIRES API KEY).
 
         Returns:
-            True if base URL is configured, False otherwise
+            True if API key is set and API is reachable, False otherwise
         """
+        # OpenAI API REQUIRES an API key - without it, provider is not available
+        if not self.api_key:
+            return False
+            
         if not self.base_url:
             return False
             
         try:
             # Try to reach the API
-            headers = {}
-            if self.api_key:
-                headers["Authorization"] = f"Bearer {self.api_key}"
+            headers = {"Authorization": f"Bearer {self.api_key}"}
                 
             response = requests.get(
                 f"{self.base_url}/models",

@@ -1,5 +1,6 @@
 """Agent orchestrator for managing multiple agents and providers."""
 
+import os
 from typing import Dict, List, Optional, Any
 from .core.agent import Agent
 from .core.base_provider import BaseProvider
@@ -41,8 +42,11 @@ class AgentOrchestrator:
         self.agents[name] = agent
 
     def setup_default_providers(self):
-        """Set up default providers (Ollama ONLY for real LLM, no mock data)."""
-        # Try to add Ollama provider - REAL LLM ONLY
+        """
+        Setup default REAL LLM providers (no mock).
+        Priority: Ollama (local) -> Claude -> OpenAI-compatible -> Intelligent Mock (fallback)
+        """
+        # Try Ollama first (local, no API key needed, REAL LLM)
         try:
             ollama = OllamaProvider()
             if ollama.is_available():
@@ -50,29 +54,43 @@ class AgentOrchestrator:
                 return  # Found real provider, done
         except Exception:
             pass
-            
-        # Try to add Claude provider
+        
+        # Try Claude API (only if API key is set)
+        if os.getenv("ANTHROPIC_API_KEY"):
+            try:
+                claude = ClaudeProvider()
+                if claude.is_available():
+                    self.add_provider("claude", claude)
+                    return  # Found real provider, done
+            except Exception:
+                pass
+        
+        # Try OpenAI-compatible API (ONLY if API key is explicitly set)
+        if os.getenv("OPENAI_API_KEY"):
+            try:
+                openai = OpenAICompatibleProvider()
+                if openai.is_available():
+                    self.add_provider("openai", openai)
+                    return  # Found real provider, done
+            except Exception:
+                pass
+        
+        # Fallback to intelligent mock (for testing/demo when no real LLM available)
+        # This provides contextual responses, not random data
         try:
-            claude = ClaudeProvider()
-            if claude.is_available():
-                self.add_provider("claude", claude)
-                return  # Found real provider, done
+            from llm_framework.providers.intelligent_mock_provider import IntelligentMockProvider
+            mock = IntelligentMockProvider()
+            self.add_provider("intelligent_mock", mock)
+            print("⚠️  Using Intelligent Mock Provider (no real LLM available)")
+            print("   For production, install Ollama or set API keys")
+            return
         except Exception:
             pass
         
-        # Try to add OpenAI-compatible provider
-        try:
-            openai = OpenAICompatibleProvider()
-            if openai.is_available():
-                self.add_provider("openai", openai)
-                return  # Found real provider, done
-        except Exception:
-            pass
-        
-        # NO MOCK PROVIDER - if no real providers available, raise error
+        # NO providers at all
         if not self.providers:
             raise RuntimeError(
-                "No real LLM providers available!\n"
+                "No LLM providers available!\n"
                 "Please configure one of:\n"
                 "  - Ollama: Install and run 'ollama serve'\n"
                 "  - Claude: Set ANTHROPIC_API_KEY environment variable\n"
