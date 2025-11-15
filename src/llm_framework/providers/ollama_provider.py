@@ -42,9 +42,9 @@ class OllamaProvider(BaseProvider):
             raise RuntimeError("Ollama server is not available")
 
         try:
-            # Extract parameters
+            # Extract parameters - use shorter responses for CPU-only Ollama
             temperature = kwargs.get("temperature", 0.7)
-            max_tokens = kwargs.get("max_tokens", 1024)
+            max_tokens = kwargs.get("max_tokens", 150)  # Reduced for CPU performance
 
             response = requests.post(
                 f"{self.base_url}/api/generate",
@@ -57,7 +57,7 @@ class OllamaProvider(BaseProvider):
                         "num_predict": max_tokens,
                     }
                 },
-                timeout=30
+                timeout=60  # Increased for CPU
             )
 
             response.raise_for_status()

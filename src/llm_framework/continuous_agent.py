@@ -61,16 +61,15 @@ class ContinuousAgent:
             self._thread.join(timeout=5)
 
     def _run(self):
-        """Internal run loop for the continuous agent."""
+        """Internal run loop for the continuous agent - ALWAYS BUSY with real tasks."""
         while self.is_running:
             # Check if we've hit max iterations
             if self.max_iterations and self.iteration_count >= self.max_iterations:
                 self.is_running = False
                 break
 
-            # If queue is empty, add a new task to keep agent busy
-            if not self.task_queue:
-                self._generate_task()
+            # ALWAYS add a new task to keep agent continuously busy (never idle)
+            self._generate_task()
 
             # Process tasks from queue
             if self.task_queue:
@@ -100,7 +99,7 @@ class ContinuousAgent:
 
                 self.iteration_count += 1
 
-            # Wait before next iteration
+            # Minimal wait before next iteration (always busy)
             time.sleep(self.interval)
     
     def _generate_task(self):

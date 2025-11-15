@@ -41,16 +41,19 @@ class AgentOrchestrator:
         self.agents[name] = agent
 
     def setup_default_providers(self):
-        """Set up default providers (Mock for guaranteed reliability, then Ollama, Claude, OpenAI-compatible)."""
-        # Always add Mock provider FIRST for guaranteed functionality
-        mock = MockLLMProvider()
-        self.add_provider("mock", mock)
-        
-        # Try to add Ollama provider
+        """Set up default providers (Ollama ONLY for real LLM, no mock data)."""
+        # Try to add Ollama provider - REAL LLM ONLY
         try:
+            # Start Ollama if not running
+            import subprocess
+            subprocess.Popen(['ollama', 'serve'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            import time
+            time.sleep(2)
+            
             ollama = OllamaProvider()
             if ollama.is_available():
                 self.add_provider("ollama", ollama)
+                return  # Found real provider, done
         except Exception:
             pass
             
@@ -59,6 +62,7 @@ class AgentOrchestrator:
             claude = ClaudeProvider()
             if claude.is_available():
                 self.add_provider("claude", claude)
+                return  # Found real provider, done
         except Exception:
             pass
         
@@ -67,30 +71,37 @@ class AgentOrchestrator:
             openai = OpenAICompatibleProvider()
             if openai.is_available():
                 self.add_provider("openai", openai)
+                return  # Found real provider, done
         except Exception:
             pass
+        
+        # NO MOCK PROVIDER - if no real providers available, raise error
+        if not self.providers:
+            raise RuntimeError(
+                "No real LLM providers available!\n"
+                "Please configure one of:\n"
+                "  - Ollama: Install and run 'ollama serve'\n"
+                "  - Claude: Set ANTHROPIC_API_KEY environment variable\n"
+                "  - OpenAI: Set OPENAI_API_KEY environment variable"
+            )
 
     def setup_default_agents(self, provider_name: Optional[str] = None):
         """
-        Set up default agents using available providers.
-        Uses Mock provider for guaranteed fast, reliable operation.
+        Set up default agents using REAL LLM providers only (no mock).
 
         Args:
             provider_name: Specific provider to use, or None to use first available
         """
-        # Get provider to use - prefer mock for reliability
+        # Get provider to use - REAL LLM ONLY
         if provider_name and provider_name in self.providers:
             provider = self.providers[provider_name]
-        elif "mock" in self.providers:
-            # Use mock provider for guaranteed fast operation
-            provider = self.providers["mock"]
         elif self.providers:
-            # Fallback to first available
+            # Use first available REAL provider
             provider = list(self.providers.values())[0]
         else:
-            raise RuntimeError("No providers available. Add at least one provider first.")
+            raise RuntimeError("No REAL LLM providers available. Cannot create agents without real providers.")
 
-        # Create default agents
+        # Create default agents with REAL LLM
         self.add_agent("research", ResearchAgent.create_default(provider))
         self.add_agent("coding", CodingAgent.create_default(provider))
         self.add_agent("writing", WritingAgent.create_default(provider))
