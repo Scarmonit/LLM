@@ -58,21 +58,74 @@ cd LLM
 pip install -r requirements.txt
 ```
 
+## 🤖 Enhanced GitHub Copilot Integration
+
+This repository is configured with advanced GitHub Copilot features to make the AI assistant smarter and more context-aware:
+
+### What Makes Copilot Smarter Here?
+
+✅ **Custom Instructions** - Repository-specific guidance in `.github/copilot-instructions.md`  
+✅ **Custom Agent** - Specialized "LLM Framework Expert" agent for domain-specific help  
+✅ **MCP Servers** - Additional tools via Model Context Protocol (browser automation, GitHub operations)  
+✅ **Optimized DevContainer** - Pre-configured development environment with all tools ready  
+
+### Quick Benefits
+
+- **Context-Aware Suggestions**: Copilot understands the framework architecture and patterns
+- **Avoid Past Mistakes**: Knows about documented pitfalls and anti-patterns  
+- **Enhanced Tools**: Can use browser automation and advanced Git operations via MCP
+- **Specialized Help**: Ask `@llm-framework-expert` for framework-specific guidance
+- **Instant Setup**: Open in DevContainer and everything is ready
+
+### Getting Started
+
+#### Option 1: GitHub Codespaces (Recommended)
+```bash
+# 1. Click "Code" → "Codespaces" → "Create codespace"
+# 2. Wait for environment to initialize
+# 3. Start coding with enhanced Copilot!
+```
+
+#### Option 2: VS Code DevContainer
+```bash
+# 1. Install "Dev Containers" extension
+# 2. Open repository in VS Code
+# 3. Click "Reopen in Container" when prompted
+# 4. Copilot is now enhanced with custom features
+```
+
+#### Option 3: Local Development
+```bash
+git clone https://github.com/Scarmonit/LLM.git
+cd LLM
+pip install -r requirements.txt
+# Copilot custom instructions work, but MCP servers require DevContainer
+```
+
+### Using the Custom Copilot Agent
+
+Ask domain-specific questions:
+```
+@llm-framework-expert How do I add a new LLM provider?
+@llm-framework-expert What's the best temperature for a research agent?
+@llm-framework-expert My agents aren't starting. How do I debug?
+```
+
+### MCP Servers Available
+
+- **playwright**: Browser automation and testing
+- **github-mcp-server**: Enhanced GitHub repository operations
+
+**Learn More**: See [Copilot Enhancement Guide](docs/COPILOT_GUIDE.md) for complete details on custom instructions, MCP servers, and best practices.
+
 ## Development Environment
 
-This repository includes a DevContainer configuration for use with VS Code or GitHub Codespaces. The devcontainer is pre-configured with:
-- Python 3.11
-- Node.js 20
-- GitHub CLI
-- GitHub Copilot with MCP (Model Context Protocol) servers
-
-### MCP Servers
-
-The following MCP servers are configured for enhanced GitHub Copilot capabilities:
-- **playwright**: Browser automation and testing capabilities
-- **github-mcp-server**: Enhanced GitHub repository operations and workflows
-
-These servers are automatically started when you open the project in a DevContainer and provide GitHub Copilot with additional tools for browser automation and advanced Git operations.
+Pre-configured DevContainer includes:
+- Python 3.11 with all dependencies
+- Node.js 20 for MCP servers
+- GitHub CLI for Git operations
+- GitHub Copilot with custom configuration
+- Automatic setup on container creation
 
 ## Quick Start
 
