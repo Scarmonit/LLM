@@ -1,0 +1,43 @@
+{
+  "name": "llm-framework",
+  "version": "2.1.1",
+  "description": "LLM Multi-Provider Framework with MCP integration",
+  "type": "module",
+  "main": "src/index.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "start:bridge": "node src/ai-bridge.js",
+    "kali:mcp": "node src/mcp/kali-mcp-server.js",
+    "test": "node --test tests/**/*.test.js",
+    "lint": "eslint src tests",
+    "format": "prettier --write \"src/**/*.js\" \"tests/**/*.js\""
+  },
+  "keywords": [
+    "llm",
+    "ai",
+    "mcp",
+    "security",
+    "nmap",
+    "kali"
+  ],
+  "author": "Parker Dunn <scarmonit@gmail.com>",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Scarmonit/LLM.git"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.20.1",
+    "axios": "^1.7.9",
+    "winston": "^3.17.0",
+    "ws": "^8.18.0",
+    "dotenv": "^16.4.7"
+  },
+  "devDependencies": {
+    "eslint": "^9.18.0",
+    "prettier": "^3.4.2"
+  }
+}
