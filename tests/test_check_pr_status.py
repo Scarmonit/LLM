@@ -106,4 +106,3 @@ class TestCheckPRStatusOutput:
             if os.path.exists(output_file):
                 os.unlink(output_file)
 
-
