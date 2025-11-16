@@ -130,7 +130,7 @@ class TerraformMCPServer {
         cwd: safeWorkingDir,
         maxBuffer: 50 * 1024 * 1024, // 50MB buffer for large plans
         timeout: 300000, // 5 minute timeout
-        shell: '/bin/sh', // Explicit shell
+        shell: true, // Cross-platform shell (cmd.exe on Windows, /bin/sh on Linux)
         env: {
           ...process.env,
           TF_IN_AUTOMATION: '1', // Disable interactive prompts

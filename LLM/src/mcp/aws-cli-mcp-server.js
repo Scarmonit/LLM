@@ -99,7 +99,7 @@ class AWSCliMCPServer {
       const { stdout, stderr } = await execAsync(cmd, {
         maxBuffer: 10 * 1024 * 1024, // 10MB buffer
         timeout: 60000, // 60 second timeout
-        shell: '/bin/sh', // Explicit shell
+        shell: true, // Cross-platform shell (cmd.exe on Windows, /bin/sh on Linux)
       });
 
       if (stderr && !stdout) {
