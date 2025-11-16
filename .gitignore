@@ -36,6 +36,16 @@ venv.bak/
 htmlcov/
 .tox/
 .hypothesis/
+coverage/
+.nyc_output/
+
+# Node.js
+node_modules/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
 
 # IDEs
 .vscode/
@@ -51,3 +61,19 @@ Thumbs.db
 # Environment variables
 .env
 .env.local
+.env.*.local
+
+# Build
+dist/
+build/
+
+# Session data
+.claude-sessions/
+
+# Temporary
+tmp/
+temp/
+*.tmp
+
+# MCP
+.mcp-auth/

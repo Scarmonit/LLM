@@ -1,0 +1,40 @@
+# Terraform MCP Server - Docker Image
+# Provides Terraform capabilities via Model Context Protocol
+
+FROM node:18-alpine
+
+# Install Terraform
+RUN apk add --no-cache \
+    wget \
+    unzip \
+    && wget https://releases.hashicorp.com/terraform/1.9.8/terraform_1.9.8_linux_amd64.zip \
+    && unzip terraform_1.9.8_linux_amd64.zip \
+    && mv terraform /usr/local/bin/ \
+    && rm terraform_1.9.8_linux_amd64.zip \
+    && terraform --version \
+    && rm -rf /var/cache/apk/*
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files and install dependencies
+COPY package.json ./
+RUN npm install --omit=dev
+
+# Copy application code and utilities
+COPY src/mcp/terraform-mcp-server.js ./src/mcp/terraform-mcp-server.js
+COPY src/utils/logger.js ./src/utils/logger.js
+
+# Create Terraform working directories
+RUN mkdir -p /terraform
+
+# Set environment variables
+ENV NODE_ENV=production \
+    TF_IN_AUTOMATION=1 \
+    TF_INPUT=0
+
+# Volume for Terraform projects
+VOLUME ["/terraform"]
+
+# Run the Terraform MCP server
+CMD ["node", "src/mcp/terraform-mcp-server.js"]
