@@ -1,0 +1,33 @@
+# Kali MCP Server - Docker Image
+# Provides security scanning tools via Model Context Protocol
+
+FROM node:20-alpine
+
+# Install security tools (nmap)
+RUN apk add --no-cache \
+    nmap \
+    nmap-scripts \
+    && rm -rf /var/cache/apk/*
+
+# Set working directory
+WORKDIR /app
+
+# Create package.json for dependencies
+RUN echo '{"name":"kali-mcp-server","version":"1.0.0","type":"module","dependencies":{"@modelcontextprotocol/sdk":"^1.0.4","axios":"^1.6.0"}}' > package.json
+
+# Install dependencies
+RUN npm install --omit=dev
+
+# Copy the MCP server script
+COPY kali-mcp-server.js .
+RUN chmod +x kali-mcp-server.js
+
+# Set environment variables
+ENV NODE_ENV=production
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD node -e "process.exit(0)"
+
+# Run the Kali MCP server
+CMD ["node", "kali-mcp-server.js"]

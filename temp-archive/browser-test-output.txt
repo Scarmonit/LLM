@@ -1,0 +1,109 @@
+
+╔══════════════════════════════════════════════════════════════════╗
+║                                                                  ║
+║       🎉 100% FREE BROWSER AUTOMATION IS HERE! 🎉                ║
+║                                                                  ║
+║   Browser-Use + Ollama = Unlimited Browser Control              ║
+║   No API Keys | No Costs | No Limits | Full Privacy             ║
+║                                                                  ║
+╚══════════════════════════════════════════════════════════════════╝
+    
+
+======================================================================
+🎯 100% FREE BROWSER AUTOMATION DEMO
+======================================================================
+✅ Using local Ollama model: qwen2.5:7b
+💰 Cost: $0.00 forever
+🔓 No API keys needed
+🚀 Unlimited usage
+
+INFO     [service] Using anonymized telemetry, see https://docs.browser-use.com/development/telemetry.
+INFO     [Agent] 🔗 Found URL in task: https://example.com, adding as initial action...
+🤖 Running autonomous agent...
+
+INFO     [Agent] [34m🎯 Task: Go to example.com and tell me the main heading text[0m
+INFO     [Agent] Starting a browser-use agent with version 0.9.5, with provider=ollama and model=qwen2.5:7b
+INFO     [Agent]   ▶️   [34mnavigate[0m: [35murl[0m: https://example.com, [35mnew_tab[0m: False
+INFO     [tools] 🔗 Navigated to https://example.com
+INFO     [Agent] 
+
+INFO     [Agent] 📍 Step 1:
+ERROR    [Agent] ❌ Result failed 1/4 times:
+ Invalid model output format. Please follow the correct schema.
+Details: 3 validation errors for TokenUsageEntry
+usage.prompt_cached_tokens
+  Field required [type=missing, input_value={'prompt_tokens': 0, 'com...': 0, 'total_tokens': 0}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+usage.prompt_cache_creation_tokens
+  Field required [type=missing, input_value={'prompt_tokens': 0, 'com...': 0, 'total_tokens': 0}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+usage.prompt_image_tokens
+  Field required [type=missing, input_value={'prompt_tokens': 0, 'com...': 0, 'total_tokens': 0}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+INFO     [Agent] 
+
+INFO     [Agent] 📍 Step 2:
+ERROR    [Agent] ❌ Result failed 2/4 times:
+ Invalid model output format. Please follow the correct schema.
+Details: 3 validation errors for TokenUsageEntry
+usage.prompt_cached_tokens
+  Field required [type=missing, input_value={'prompt_tokens': 0, 'com...': 0, 'total_tokens': 0}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+usage.prompt_cache_creation_tokens
+  Field required [type=missing, input_value={'prompt_tokens': 0, 'com...': 0, 'total_tokens': 0}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+usage.prompt_image_tokens
+  Field required [type=missing, input_value={'prompt_tokens': 0, 'com...': 0, 'total_tokens': 0}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+INFO     [Agent] 
+
+INFO     [Agent] 📍 Step 3:
+ERROR    [Agent] ❌ Result failed 3/4 times:
+ Invalid model output format. Please follow the correct schema.
+Details: 3 validation errors for TokenUsageEntry
+usage.prompt_cached_tokens
+  Field required [type=missing, input_value={'prompt_tokens': 0, 'com...': 0, 'total_tokens': 0}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+usage.prompt_cache_creation_tokens
+  Field required [type=missing, input_value={'prompt_tokens': 0, 'com...': 0, 'total_tokens': 0}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+usage.prompt_image_tokens
+  Field required [type=missing, input_value={'prompt_tokens': 0, 'com...': 0, 'total_tokens': 0}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+INFO     [Agent] 
+
+INFO     [Agent] 📍 Step 4:
+ERROR    [Agent] ❌ Result failed 4/4 times:
+ Invalid model output format. Please follow the correct schema.
+Details: 3 validation errors for TokenUsageEntry
+usage.prompt_cached_tokens
+  Field required [type=missing, input_value={'prompt_tokens': 0, 'com...': 0, 'total_tokens': 0}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+usage.prompt_cache_creation_tokens
+  Field required [type=missing, input_value={'prompt_tokens': 0, 'com...': 0, 'total_tokens': 0}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+usage.prompt_image_tokens
+  Field required [type=missing, input_value={'prompt_tokens': 0, 'com...': 0, 'total_tokens': 0}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+ERROR    [Agent] ❌ Stopping due to 3 consecutive failures
+INFO     [Agent] 
+INFO     [Agent] Did the Agent not work as expected? Let us fix this!
+INFO     [Agent]    Open a short issue on GitHub: https://github.com/browser-use/browser-use/issues
+INFO     [BrowserSession] [SessionManager] Cleared all session tracking
+
+======================================================================
+✅ MISSION COMPLETE!
+📊 Result: AgentHistoryList(all_results=[ActionResult(is_done=False, success=None, error=None, attachments=None, long_term_memory='Found initial url and automatically loaded it. Navigated to https://example.com', extracted_content='🔗 Navigated to https://example.com', include_extracted_content_only_once=False, metadata=None, include_in_memory=False), ActionResult(is_done=False, success=None, error="Invalid model output format. Please follow the correct schema.\nDetails: 3 validation errors for TokenUsageEntry\nusage.prompt_cached_tokens\n  Field required [type=missing, input_value={'prompt_tokens': 0, 'com...': 0, 'total_tokens': 0}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\nusage.prompt_cache_creation_tokens\n  Field required [type=missing, input_value={'prompt_tokens': 0, 'com...': 0, 'total_tokens': 0}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\nusage.prompt_image_tokens\n  Field required [type=missing, input_value={'prompt_tokens': 0, 'com...': 0, 'total_tokens': 0}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing", attachments=None, long_term_memory=None, extracted_content=None, include_extracted_content_only_once=False, metadata=None, include_in_memory=False), ActionResult(is_done=False, success=None, error="Invalid model output format. Please follow the correct schema.\nDetails: 3 validation errors for TokenUsageEntry\nusage.prompt_cached_tokens\n  Field required [type=missing, input_value={'prompt_tokens': 0, 'com...': 0, 'total_tokens': 0}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\nusage.prompt_cache_creation_tokens\n  Field required [type=missing, input_value={'prompt_tokens': 0, 'com...': 0, 'total_tokens': 0}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\nusage.prompt_image_tokens\n  Field required [type=missing, input_value={'prompt_tokens': 0, 'com...': 0, 'total_tokens': 0}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing", attachments=None, long_term_memory=None, extracted_content=None, include_extracted_content_only_once=False, metadata=None, include_in_memory=False), ActionResult(is_done=False, success=None, error="Invalid model output format. Please follow the correct schema.\nDetails: 3 validation errors for TokenUsageEntry\nusage.prompt_cached_tokens\n  Field required [type=missing, input_value={'prompt_tokens': 0, 'com...': 0, 'total_tokens': 0}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\nusage.prompt_cache_creation_tokens\n  Field required [type=missing, input_value={'prompt_tokens': 0, 'com...': 0, 'total_tokens': 0}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\nusage.prompt_image_tokens\n  Field required [type=missing, input_value={'prompt_tokens': 0, 'com...': 0, 'total_tokens': 0}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing", attachments=None, long_term_memory=None, extracted_content=None, include_extracted_content_only_once=False, metadata=None, include_in_memory=False), ActionResult(is_done=False, success=None, error="Invalid model output format. Please follow the correct schema.\nDetails: 3 validation errors for TokenUsageEntry\nusage.prompt_cached_tokens\n  Field required [type=missing, input_value={'prompt_tokens': 0, 'com...': 0, 'total_tokens': 0}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\nusage.prompt_cache_creation_tokens\n  Field required [type=missing, input_value={'prompt_tokens': 0, 'com...': 0, 'total_tokens': 0}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\nusage.prompt_image_tokens\n  Field required [type=missing, input_value={'prompt_tokens': 0, 'com...': 0, 'total_tokens': 0}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing", attachments=None, long_term_memory=None, extracted_content=None, include_extracted_content_only_once=False, metadata=None, include_in_memory=False)], all_model_outputs=[{'navigate': {'url': 'https://example.com', 'new_tab': False}, 'interacted_element': None}])
+💰 Total cost: $0.00
+======================================================================
+
+======================================================================
+🎊 SUCCESS! Your free browser automation is working!
+======================================================================
+
+📝 NEXT STEPS:
+1. Try more complex tasks
+2. Use vision models: qwen3-vl for screenshot analysis
+3. Build autonomous workflows
+4. Share your success with others!
+

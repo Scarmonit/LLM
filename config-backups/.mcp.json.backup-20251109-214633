@@ -1,0 +1,113 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "C:/Users/scarm"
+      ],
+      "env": {}
+    },
+    "puppeteer": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-puppeteer"
+      ],
+      "env": {}
+    },
+    "shell": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "@modelcontextprotocol/server-shell"
+      ],
+      "env": {}
+    },
+    "claude-bridge": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "C:/Users/scarm/claude-bridge-mcp/index.js"
+      ],
+      "env": {}
+    },
+    "mcp-doctor": {
+      "type": "stdio",
+      "command": "docker",
+      "args": [
+        "exec",
+        "-i",
+        "mcp-doctor-server",
+        "node",
+        "mcp-doctor-server.js"
+      ],
+      "env": {}
+    },
+    "kali-mcp": {
+      "type": "stdio",
+      "command": "docker",
+      "args": [
+        "exec",
+        "-i",
+        "kali-mcp-server",
+        "node",
+        "kali-mcp-server.js"
+      ],
+      "env": {}
+    },
+    "onepassword": {
+      "type": "stdio",
+      "command": "docker",
+      "args": [
+        "exec",
+        "-i",
+        "onepassword-mcp-server",
+        "node",
+        "onepassword-mcp-server.js"
+      ],
+      "env": {
+        "OP_SERVICE_ACCOUNT_TOKEN": "placeholder-token"
+      }
+    },
+    "desktop-automation": {
+      "type": "stdio",
+      "command": "docker",
+      "args": [
+        "exec",
+        "-i",
+        "desktop-automation-mcp-server",
+        "node",
+        "desktop-automation-mcp-server.js"
+      ],
+      "env": {}
+    },
+    "a2a-unified": {
+      "type": "stdio",
+      "command": "docker",
+      "args": [
+        "exec",
+        "-i",
+        "a2a-unified-mcp-server",
+        "python",
+        "unified_server_monitored.py"
+      ],
+      "env": {}
+    },
+    "claude-code": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@steipete/claude-code-mcp"
+      ],
+      "env": {
+        "CLAUDE_CLI_NAME": "claude",
+        "MCP_CLAUDE_DEBUG": "true"
+      }
+    }
+  }
+}

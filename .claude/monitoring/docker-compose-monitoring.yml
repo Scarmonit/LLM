@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  # Portainer - Docker Management & Monitoring Dashboard
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer-monitoring
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+      - "9443:9443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    # Healthcheck removed - portainer-ce:latest has no shell for CMD-SHELL execution
+    # Application functions correctly without healthcheck
+    networks:
+      - monitoring-network
+
+  # Watchtower - Automatic Container Updates
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: watchtower-auto-update
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_POLL_INTERVAL=86400  # Check daily (24 hours)
+      - WATCHTOWER_INCLUDE_RESTARTING=true
+      - WATCHTOWER_NOTIFICATIONS=shoutrrr
+      - WATCHTOWER_NOTIFICATION_URL=${WATCHTOWER_NOTIFICATION_URL:-}  # Optional: Slack/Discord webhook
+    networks:
+      - monitoring-network
+
+  # Dozzle - Real-time Log Viewer
+  dozzle:
+    image: amir20/dozzle:latest
+    container_name: dozzle-logs
+    restart: unless-stopped
+    ports:
+      - "8889:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - DOZZLE_LEVEL=info
+      - DOZZLE_TAILSIZE=300
+      - DOZZLE_FILTER=status=running
+    healthcheck:
+      test: ["CMD", "/dozzle", "healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - monitoring-network
+
+  # Health Check Monitor (custom script)
+  health-monitor:
+    image: alpine:latest
+    container_name: health-monitor
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./health-check.sh:/health-check.sh
+    command: sh -c "apk add --no-cache docker-cli && while true; do sh /health-check.sh; sleep 300; done"
+    networks:
+      - monitoring-network
+
+volumes:
+  portainer_data:
+    driver: local
+
+networks:
+  monitoring-network:
+    driver: bridge

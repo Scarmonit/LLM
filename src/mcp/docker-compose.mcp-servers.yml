@@ -1,0 +1,165 @@
+version: '3.8'
+
+services:
+  # MCP Doctor - Diagnose and fix other MCP servers
+  mcp-doctor:
+    container_name: mcp-doctor-server
+    build:
+      context: .
+      dockerfile: Dockerfile.mcp-doctor
+    image: mcp-doctor:latest
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    networks:
+      - mcp-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "process.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Kali MCP - Security scanning and vulnerability assessment
+  kali-mcp:
+    container_name: kali-mcp-server
+    build:
+      context: .
+      dockerfile: Dockerfile.kali-mcp
+    image: kali-mcp:latest
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    networks:
+      - mcp-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "process.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # 1Password MCP - Secret management
+  onepassword-mcp:
+    container_name: onepassword-mcp-server
+    build:
+      context: .
+      dockerfile: Dockerfile.onepassword
+    image: onepassword-mcp:latest
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    environment:
+      - OP_SERVICE_ACCOUNT_TOKEN=${OP_SERVICE_ACCOUNT_TOKEN:-placeholder-token}
+    networks:
+      - mcp-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "process.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Desktop Automation MCP - Browser automation with Puppeteer
+  desktop-automation-mcp:
+    container_name: desktop-automation-mcp-server
+    build:
+      context: .
+      dockerfile: Dockerfile.desktop-automation
+    image: desktop-automation-mcp:latest
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    environment:
+      - DISPLAY=:99
+    shm_size: 2gb
+    networks:
+      - mcp-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "process.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # A2A Unified MCP - Knowledge search, memory, and system tools
+  a2a-unified-mcp:
+    container_name: a2a-unified-mcp-server
+    build:
+      context: .
+      dockerfile: Dockerfile.a2a-unified
+    image: a2a-unified-mcp:latest
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    networks:
+      - mcp-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  omnipotent-mcp:
+    container_name: omnipotent-mcp-server
+    build:
+      context: .
+      dockerfile: Dockerfile.omnipotent
+    image: omnipotent-mcp:latest
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    networks:
+      - mcp-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  mcp-network:
+    driver: bridge
+    name: mcp-network
+
+# Usage:
+# Build all containers:  docker-compose -f docker-compose.mcp-servers.yml build
+# Start all containers:  docker-compose -f docker-compose.mcp-servers.yml up -d
+# Stop all containers:   docker-compose -f docker-compose.mcp-servers.yml down
+# View logs:             docker-compose -f docker-compose.mcp-servers.yml logs -f
+# Restart a server:      docker-compose -f docker-compose.mcp-servers.yml restart <service-name>

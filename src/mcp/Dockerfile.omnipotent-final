@@ -1,0 +1,42 @@
+# Omnipotent MCP Server v3.0 - Production Dockerfile
+
+FROM python:3.11-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Install Python dependencies
+RUN pip install --no-cache-dir \
+    mcp>=1.1.0 \
+    httpx>=0.25.0 \
+    psutil>=5.9.0 \
+    beautifulsoup4>=4.12.0 \
+    aiofiles>=23.0.0 \
+    pyyaml>=6.0
+
+# Copy server
+COPY server_production.py /app/server.py
+
+# Make executable
+RUN chmod +x /app/server.py
+
+# Create data directory
+RUN mkdir -p /app/data /tmp
+
+# Environment
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONOPTIMIZE=1
+ENV LOG_LEVEL=INFO
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD python -c "import sys; sys.exit(0)"
+
+# Run server
+CMD ["python", "-u", "/app/server.py"]

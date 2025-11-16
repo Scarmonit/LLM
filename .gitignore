@@ -1,42 +1,127 @@
-# Dependencies
+# Archived and temporary content
+.archived-projects/*/
+.archived-docs/
+docs/legacy/
+docs/archived/
+
+# Organized directories (already tracked or managed)
+screenshots/
+scripts/testing/
+scripts/utilities/
+config-backups/
+
+# System and config
+.env*
+.aws/credentials
+*.pem
+*.key
+.git-credentials
+.npmrc
+.openrouter-key.txt
+
+# Build artifacts
 node_modules/
-
-# Environment
-.env
-.env.local
-.env.*.local
-
-# Logs
-logs/
-*.log
-npm-debug.log*
-
-# Testing
-coverage/
-.nyc_output/
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Build
+__pycache__/
+*.pyc
 dist/
 build/
+npm-cache/
 
-# Session data
-.claude-sessions/
+# IDE and tools
+.vscode/
+.idea/
+.aider/
+.aider.tags.cache.v4/
+.continue/
+.codeium/
+.codex/
 
-# Temporary
-tmp/
-temp/
-*.tmp
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+NTUSER.DAT*
 
-# MCP
-.mcp-auth/
+# Large binaries and archives
+*.zip
+*.tar.gz
+*.exe
+*.dll
+*.msixbundle
+*.tgz
+
+# Test and temp files
+test_*.json
+*_backup*
+*.backup
+*.log
+*-backup-*
+
+# Screenshots and monitoring
+*.png
+*.jpg
+*.jpeg
+screenshot*.png
+claude-monitor-*.png
+
+# Cache and local data
+.cache/
+.local/
+.config/
+.docker/
+.kube/
+.gnupg/
+.ollama/
+.lmstudio/
+.bun/
+.playwright-mcp/
+.puppeteer-profile/
+.cloudflared/
+
+# MCP and Claude specific
+.claude/sessions/
+.claude/logs/
+.claude/shell-snapshots/
+.claude/file-history/
+.claude/statsig/
+.claude/todos/
+.claude/code-reports/
+.claude/history.jsonl
+.claude/settings.json.backup*
+.claude/code-index.json
+.claude/codebase-map.json
+.mcp.json.backup*
+
+# Windows system files
+GPO-Backups/
+AppData/
+OneDrive/
+iCloudDrive/
+NetHood/
+SendTo/
+Templates/
+Desktop/
+Documents/
+Downloads/
+Pictures/
+
+# Project specific temp
+mcp_runs/
+memory.sqlite-wal
+memory.sqlite-shm
+*.regtrans-ms
+
+# Git and deployment
+.extraction-path.txt
+.git-for-windows-updater
+nul
+
+# Additional MCP and Claude exclusions
+.claude/debug/
+.claude/mcp/servers/**/.venv-linux/
+.claude/mcp/servers/**/.venv/
+.claude-bridge/
+.aitk/
+.gemini/
+.automation-tools/
+.dbclient/

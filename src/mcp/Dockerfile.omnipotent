@@ -1,0 +1,18 @@
+FROM python:3.12-slim
+
+# Install uv
+RUN pip install --no-cache-dir pipx && \
+    pipx ensurepath
+RUN pipx install uv
+
+# Copy the omnipotent-mcp directory
+COPY ../omnipotent-mcp /app
+
+# Set the working directory
+WORKDIR /app
+
+# Install dependencies from pyproject.toml using uv
+RUN uv pip install .
+
+# Run the server
+CMD ["uv", "run", "server_optimized.py"]

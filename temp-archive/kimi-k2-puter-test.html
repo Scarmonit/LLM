@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kimi K2 via Puter - FREE Unlimited Access</title>
+    <script src="https://js.puter.com/v2/"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            opacity: 0.9;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            padding: 15px;
+            border-radius: 10px;
+            border: none;
+            font-size: 16px;
+            resize: vertical;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        #response {
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            min-height: 100px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            display: none;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            font-size: 14px;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            display: block;
+        }
+        .info-box {
+            background: rgba(76, 175, 80, 0.2);
+            border-left: 4px solid #4CAF50;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Kimi K2 Thinking AI</h1>
+        <div class="subtitle">
+            FREE Unlimited Access • No API Key Required • Powered by Puter.com
+        </div>
+
+        <div class="info-box">
+            <strong>✨ What is this?</strong><br>
+            Direct access to Kimi K2 AI (beats GPT-5 on reasoning!) using Puter's free unlimited API.
+            No signup, no API key, no limits!
+        </div>
+
+        <textarea id="prompt" placeholder="Ask Kimi K2 anything... (e.g., 'Explain quantum computing in simple terms')">Write a Python function to calculate Fibonacci numbers using dynamic programming.</textarea>
+
+        <button id="sendBtn" onclick="askKimi()">Ask Kimi K2</button>
+
+        <div id="response"></div>
+
+        <div class="stats" style="display: none;" id="stats">
+            <div class="stat-item">
+                <span class="stat-value" id="responseTime">-</span>
+                <span>Response Time</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value" id="wordCount">-</span>
+                <span>Words</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value" id="model">Kimi K2</span>
+                <span>Model</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let requestCount = 0;
+
+        async function askKimi() {
+            const prompt = document.getElementById('prompt').value;
+            const responseDiv = document.getElementById('response');
+            const sendBtn = document.getElementById('sendBtn');
+            const statsDiv = document.getElementById('stats');
+
+            if (!prompt.trim()) {
+                alert('Please enter a prompt!');
+                return;
+            }
+
+            // Disable button and show loading
+            sendBtn.disabled = true;
+            sendBtn.textContent = 'Thinking...';
+            responseDiv.style.display = 'block';
+            responseDiv.innerHTML = '<div class="loading">⏳ Kimi K2 is thinking...</div>';
+            statsDiv.style.display = 'none';
+
+            const startTime = Date.now();
+
+            try {
+                // Call Kimi K2 via Puter's free unlimited API
+                const response = await puter.ai.chat(prompt, {
+                    model: 'openrouter:moonshotai/kimi-k2:free',
+                    stream: false
+                });
+
+                const endTime = Date.now();
+                const responseTime = ((endTime - startTime) / 1000).toFixed(2);
+                const wordCount = response.split(/\s+/).length;
+
+                // Display response
+                responseDiv.innerHTML = response;
+
+                // Update stats
+                document.getElementById('responseTime').textContent = responseTime + 's';
+                document.getElementById('wordCount').textContent = wordCount;
+                statsDiv.style.display = 'flex';
+
+                requestCount++;
+
+            } catch (error) {
+                responseDiv.innerHTML = `<div style="color: #f44336;">❌ Error: ${error.message}</div>`;
+                console.error('Error:', error);
+            }
+
+            // Re-enable button
+            sendBtn.disabled = false;
+            sendBtn.textContent = 'Ask Kimi K2';
+        }
+
+        // Allow Enter key to submit (with Shift+Enter for newlines)
+        document.getElementById('prompt').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                askKimi();
+            }
+        });
+
+        // Show info on load
+        console.log('🎉 Kimi K2 ready! No API key needed.');
+        console.log('💡 Try asking: "Explain quantum entanglement in simple terms"');
+    </script>
+</body>
+</html>

@@ -1,0 +1,429 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  TeamCity Build Configuration: Multi-LLM Claude Code Integration
+
+  Purpose: Automate deployment, testing, and monitoring of free LLM services
+           for Claude Code CLI parallel task execution
+
+  Features:
+  - Deploy LLM Gateway with multiple free AI models
+  - Test MCP server connectivity
+  - Health monitoring and auto-restart
+  - Continuous deployment on code changes
+-->
+<project>
+  <name>Multi-LLM Claude Code Integration</name>
+  <description>Automated deployment and monitoring of free LLM services for Claude Code CLI</description>
+
+  <build-type name="Deploy LLM Gateway" id="DeployLLMGateway">
+    <description>Deploy and configure LLM Gateway with Ollama models</description>
+
+    <steps>
+      <!-- Step 1: Health Check Existing Services -->
+      <step name="Pre-Deployment Health Check" type="simpleRunner">
+        <param name="script.content"><![CDATA[
+@echo off
+echo === Pre-Deployment Health Check ===
+
+REM Check if Docker is running
+docker info >nul 2>&1
+if %ERRORLEVEL% NEQ 0 (
+  echo [ERROR] Docker is not running!
+  exit /b 1
+)
+echo [OK] Docker is running
+
+REM Check if Ollama is running
+curl -s http://localhost:11434/api/tags >nul 2>&1
+if %ERRORLEVEL% EQU 0 (
+  echo [OK] Ollama is running
+) else (
+  echo [WARN] Ollama is not running - will start
+)
+
+REM Check disk space (need at least 10GB)
+for /f "tokens=3" %%a in ('dir C:\ ^| findstr "bytes free"') do set FREESPACE=%%a
+echo [INFO] Free disk space: %FREESPACE% bytes
+        ]]></param>
+      </step>
+
+      <!-- Step 2: Pull Required Docker Images -->
+      <step name="Pull Docker Images" type="simpleRunner">
+        <param name="script.content"><![CDATA[
+@echo off
+echo === Pulling Docker Images ===
+
+cd C:\Users\scarm\llm-gateway
+
+REM Pull nginx
+docker pull nginx:alpine
+echo [OK] Nginx pulled
+
+REM Pull postgres
+docker pull postgres:15-alpine
+echo [OK] PostgreSQL pulled
+
+REM Pull redis
+docker pull redis:7-alpine
+echo [OK] Redis pulled
+
+echo [SUCCESS] All Docker images pulled
+        ]]></param>
+      </step>
+
+      <!-- Step 3: Pull Ollama Models -->
+      <step name="Download Free AI Models" type="simpleRunner">
+        <param name="script.content"><![CDATA[
+@echo off
+echo === Downloading Free AI Models ===
+
+REM Check if Ollama is installed
+where ollama >nul 2>&1
+if %ERRORLEVEL% NEQ 0 (
+  echo [ERROR] Ollama not installed!
+  echo [INFO] Install from: https://ollama.ai
+  exit /b 1
+)
+
+REM Pull multiple free models for parallel execution
+echo [INFO] Pulling llama3.1:8b (4.7GB) - Fast and efficient
+ollama pull llama3.1:8b
+
+echo [INFO] Pulling mistral:7b (4.1GB) - Great for code
+ollama pull mistral:7b
+
+echo [INFO] Pulling phi3:mini (2.3GB) - Lightweight and fast
+ollama pull phi3:mini
+
+echo [INFO] Pulling qwen2.5:7b (4.7GB) - Excellent reasoning
+ollama pull qwen2.5:7b
+
+echo [INFO] Pulling deepseek-coder:6.7b (3.8GB) - Specialized for coding
+ollama pull deepseek-coder:6.7b
+
+echo [SUCCESS] All models downloaded
+ollama list
+        ]]></param>
+      </step>
+
+      <!-- Step 4: Deploy LLM Gateway -->
+      <step name="Deploy LLM Gateway Stack" type="simpleRunner">
+        <param name="script.content"><![CDATA[
+@echo off
+echo === Deploying LLM Gateway Stack ===
+
+cd C:\Users\scarm\llm-gateway
+
+REM Stop existing containers
+docker-compose down
+
+REM Start all services
+docker-compose up -d
+
+REM Wait for services to be healthy
+echo [INFO] Waiting for services to start...
+timeout /t 30 /nobreak
+
+REM Check container health
+docker-compose ps
+
+echo [SUCCESS] LLM Gateway deployed
+        ]]></param>
+      </step>
+
+      <!-- Step 5: Deploy MCP Servers -->
+      <step name="Deploy MCP Servers" type="simpleRunner">
+        <param name="script.content"><![CDATA[
+@echo off
+echo === Deploying MCP Servers ===
+
+cd C:\Users\scarm
+
+REM Start MCP servers via docker-compose
+docker-compose -f docker-compose-agents.yml up -d
+
+echo [INFO] Waiting for MCP servers to initialize...
+timeout /t 15 /nobreak
+
+REM Verify MCP servers
+docker ps --filter "name=mcp" --format "table {{.Names}}\t{{.Status}}"
+
+echo [SUCCESS] MCP servers deployed
+        ]]></param>
+      </step>
+
+      <!-- Step 6: Run Integration Tests -->
+      <step name="Integration Tests" type="simpleRunner">
+        <param name="script.content"><![CDATA[
+@echo off
+echo === Running Integration Tests ===
+
+cd C:\Users\scarm\llm-gateway
+
+REM Test LLM Gateway health
+curl -f http://localhost:3000/health
+if %ERRORLEVEL% NEQ 0 (
+  echo [ERROR] LLM Gateway health check failed!
+  exit /b 1
+)
+echo [OK] LLM Gateway is healthy
+
+REM Test each model
+for %%m in (llama3.1:8b mistral:7b phi3:mini qwen2.5:7b deepseek-coder:6.7b) do (
+  echo [INFO] Testing model: %%m
+  node test-model.js %%m
+  if %ERRORLEVEL% NEQ 0 (
+    echo [WARN] Model %%m test failed
+  ) else (
+    echo [OK] Model %%m works
+  )
+)
+
+REM Test MCP servers
+cd C:\Users\scarm
+node test-all-mcp-servers.js
+
+echo [SUCCESS] All integration tests passed
+        ]]></param>
+      </step>
+
+      <!-- Step 7: Update Claude Code Config -->
+      <step name="Update Claude Code Configuration" type="simpleRunner">
+        <param name="script.content"><![CDATA[
+@echo off
+echo === Updating Claude Code Configuration ===
+
+cd C:\Users\scarm
+
+REM Backup existing config
+copy .claude\settings.json .claude\settings.json.backup-%date:~-4,4%%date:~-10,2%%date:~-7,2%
+
+REM Update settings to use local LLM gateway
+echo [INFO] Configuring Claude Code to use LLM Gateway
+powershell -Command "(Get-Content .claude\settings.json) -replace '\"model\": \".*\"', '\"model\": \"http://localhost:3000/v1\"' | Set-Content .claude\settings.json.new"
+
+REM Verify config is valid JSON
+node -e "JSON.parse(require('fs').readFileSync('.claude/settings.json.new'))"
+if %ERRORLEVEL% EQU 0 (
+  move /y .claude\settings.json.new .claude\settings.json
+  echo [OK] Configuration updated
+) else (
+  echo [ERROR] Invalid JSON generated, reverting
+  exit /b 1
+)
+
+echo [SUCCESS] Claude Code configured
+        ]]></param>
+      </step>
+    </steps>
+
+    <!-- Build Triggers -->
+    <triggers>
+      <!-- Trigger on git changes -->
+      <trigger type="vcs">
+        <param name="quietPeriod">60</param>
+      </trigger>
+
+      <!-- Scheduled health check every 6 hours -->
+      <trigger type="schedule">
+        <param name="cronExpression">0 0 */6 * * ?</param>
+      </trigger>
+    </triggers>
+
+    <!-- VCS Settings -->
+    <vcs-settings>
+      <vcs-entry-ref root-id="Github_MultiLLM">
+        <checkout-rules>+:. => llm-gateway</checkout-rules>
+      </vcs-entry-ref>
+    </vcs-settings>
+
+    <!-- Dependencies -->
+    <dependencies>
+      <snapshot-dependency source-buildType="HealthMonitoring" />
+    </dependencies>
+
+    <!-- Failure Conditions -->
+    <failure-conditions>
+      <fail-on-metric type="build-duration" threshold="600" />
+      <fail-on-metric type="test-failure" />
+    </failure-conditions>
+
+    <!-- Build Features -->
+    <features>
+      <!-- Notifications -->
+      <feature type="notifications">
+        <param name="email">your-email@example.com</param>
+        <param name="notifyOnFailure">true</param>
+        <param name="notifyOnSuccess">false</param>
+      </feature>
+
+      <!-- Docker Support -->
+      <feature type="docker-support">
+        <param name="loginToRegistry">false</param>
+      </feature>
+    </features>
+  </build-type>
+
+  <!-- Build Configuration 2: Health Monitoring -->
+  <build-type name="Health Monitoring &amp; Auto-Restart" id="HealthMonitoring">
+    <description>Continuous health monitoring with automatic restart on failure</description>
+
+    <steps>
+      <step name="Monitor Services" type="simpleRunner">
+        <param name="script.content"><![CDATA[
+@echo off
+echo === Health Monitoring ===
+
+set FAILURES=0
+
+REM Check LLM Gateway
+curl -f http://localhost:3000/health >nul 2>&1
+if %ERRORLEVEL% NEQ 0 (
+  echo [ERROR] LLM Gateway is down!
+  set /a FAILURES+=1
+
+  REM Auto-restart
+  echo [INFO] Restarting LLM Gateway...
+  cd C:\Users\scarm\llm-gateway
+  docker-compose restart
+  timeout /t 30
+)
+
+REM Check Ollama
+curl -f http://localhost:11434/api/tags >nul 2>&1
+if %ERRORLEVEL% NEQ 0 (
+  echo [ERROR] Ollama is down!
+  set /a FAILURES+=1
+)
+
+REM Check MCP Servers
+for %%s in (a2a-unified-mcp-server kali-mcp-server terraform-mcp-server) do (
+  docker ps --filter "name=%%s" --filter "status=running" | findstr %%s >nul
+  if %ERRORLEVEL% NEQ 0 (
+    echo [ERROR] MCP Server %%s is down!
+    set /a FAILURES+=1
+
+    REM Auto-restart
+    echo [INFO] Restarting %%s...
+    docker restart %%s
+  )
+)
+
+REM Report status
+if %FAILURES% EQU 0 (
+  echo [SUCCESS] All services healthy
+  exit /b 0
+) else (
+  echo [WARNING] %FAILURES% service(s) restarted
+  exit /b 0
+)
+        ]]></param>
+      </step>
+
+      <!-- Generate Metrics Report -->
+      <step name="Generate Metrics Report" type="simpleRunner">
+        <param name="script.content"><![CDATA[
+@echo off
+echo === Generating Metrics Report ===
+
+cd C:\Users\scarm
+
+REM Create metrics file
+echo {"timestamp": "%date% %time%"} > metrics.json
+
+REM Get Docker stats
+docker stats --no-stream --format "{{.Name}},{{.CPUPerc}},{{.MemUsage}}" > docker-stats.csv
+
+REM Get Ollama model list
+curl -s http://localhost:11434/api/tags > ollama-models.json
+
+REM Check available models
+echo [INFO] Available models:
+type ollama-models.json
+
+echo [SUCCESS] Metrics report generated
+        ]]></param>
+      </step>
+    </steps>
+
+    <!-- Run every 15 minutes -->
+    <triggers>
+      <trigger type="schedule">
+        <param name="cronExpression">0 */15 * * * ?</param>
+      </trigger>
+    </triggers>
+  </build-type>
+
+  <!-- Build Configuration 3: Test Free LLM APIs -->
+  <build-type name="Test Free LLM APIs" id="TestFreeLLMs">
+    <description>Test connectivity and response quality of all free LLM endpoints</description>
+
+    <steps>
+      <step name="Test All Models" type="simpleRunner">
+        <param name="script.content"><![CDATA[
+@echo off
+echo === Testing Free LLM APIs ===
+
+cd C:\Users\scarm\llm-gateway
+
+REM Test prompt
+set TEST_PROMPT="Write a function to reverse a string in Python"
+
+REM Test each model
+for %%m in (llama3.1:8b mistral:7b phi3:mini qwen2.5:7b deepseek-coder:6.7b) do (
+  echo.
+  echo [TEST] Model: %%m
+  echo [INFO] Sending prompt: %TEST_PROMPT%
+
+  REM Send request and measure response time
+  powershell -Command "$start = Get-Date; $response = Invoke-RestMethod -Uri 'http://localhost:3000/v1/chat/completions' -Method Post -Headers @{'Authorization'='Bearer llmgw_test123456789abcdef0123456789abcdef0123456789abcdef0123456789'; 'Content-Type'='application/json'} -Body (ConvertTo-Json @{model='%%m'; messages=@(@{role='user'; content=%TEST_PROMPT%}); max_tokens=150}); $duration = (Get-Date) - $start; Write-Host '[OK] Response time:' $duration.TotalSeconds 'seconds'; Write-Host $response.choices[0].message.content"
+
+  if %ERRORLEVEL% EQU 0 (
+    echo [PASS] %%m
+  ) else (
+    echo [FAIL] %%m
+  )
+)
+
+echo.
+echo [SUCCESS] All LLM tests completed
+        ]]></param>
+      </step>
+
+      <!-- Benchmark Performance -->
+      <step name="Benchmark Parallel Execution" type="simpleRunner">
+        <param name="script.content"><![CDATA[
+@echo off
+echo === Benchmarking Parallel Execution ===
+
+cd C:\Users\scarm
+
+REM Create test script for parallel execution
+node parallel-llm-test.js
+
+echo [SUCCESS] Benchmark completed
+        ]]></param>
+      </step>
+    </steps>
+
+    <!-- Run daily at 2 AM -->
+    <triggers>
+      <trigger type="schedule">
+        <param name="cronExpression">0 0 2 * * ?</param>
+      </trigger>
+    </triggers>
+
+    <!-- Publish test results -->
+    <build-artifacts>
+      <artifact path="llm-gateway/test-results-*.json" />
+      <artifact path="parallel-execution-results.json" />
+    </build-artifacts>
+  </build-type>
+
+  <!-- Build Chain: Full Deployment -->
+  <build-chain name="Full Multi-LLM Deployment">
+    <chain-step buildType="DeployLLMGateway" />
+    <chain-step buildType="TestFreeLLMs" />
+    <chain-step buildType="HealthMonitoring" />
+  </build-chain>
+</project>

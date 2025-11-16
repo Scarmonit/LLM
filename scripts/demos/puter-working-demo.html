@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puter.js Complete Demo - All Features Working</title>
+    <script src="https://js.puter.com/v2/"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            color: rgba(255,255,255,0.9);
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .status.success {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .status.pending {
+            background: #FF9800;
+            color: white;
+        }
+
+        .status.error {
+            background: #f44336;
+            color: white;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 1em;
+            font-family: inherit;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .result {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .user-info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .loading {
+            color: #667eea;
+            font-style: italic;
+        }
+
+        code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Puter.js Complete Demo</h1>
+        <div class="subtitle">Free Cloud, AI, and Storage - No API Keys Required</div>
+
+        <!-- Authentication Card -->
+        <div class="card">
+            <h2>🔐 Authentication</h2>
+            <div id="authStatus" class="status pending">Checking...</div>
+            <div id="userInfo" class="user-info" style="display: none;"></div>
+            <button onclick="handleAuth()">Sign In / Sign Up</button>
+            <button onclick="showUserInfo()">Show User Info</button>
+            <button onclick="handleSignOut()">Sign Out</button>
+        </div>
+
+        <!-- AI Chat Card -->
+        <div class="card">
+            <h2>🤖 AI Chat</h2>
+            <div id="aiStatus" class="status pending">Ready</div>
+            <textarea id="aiPrompt" placeholder="Ask anything... (e.g., 'Write a haiku about coding')">Write a funny joke about programming</textarea>
+
+            <div>
+                <label>Model:</label>
+                <select id="aiModel" style="padding: 8px; border-radius: 5px; margin-left: 10px; margin-bottom: 15px;">
+                    <option value="claude-3.5-sonnet">Claude 3.5 Sonnet</option>
+                    <option value="gpt-4o">GPT-4o</option>
+                    <option value="gpt-4o-mini" selected>GPT-4o Mini</option>
+                    <option value="gemini-pro-1.5">Gemini Pro 1.5</option>
+                    <option value="llama-3.1-70b">Llama 3.1 70B</option>
+                </select>
+            </div>
+
+            <button onclick="callAI()">Ask AI</button>
+            <button onclick="streamAI()">Stream Response</button>
+            <div id="aiResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- File System Card -->
+        <div class="card">
+            <h2>📁 Cloud File System</h2>
+            <div id="fsStatus" class="status pending">Ready</div>
+
+            <h3 style="margin-top: 20px; margin-bottom: 10px;">Write File</h3>
+            <input id="fileName" type="text" placeholder="File name (e.g., notes.txt)" value="puter-test.txt">
+            <textarea id="fileContent" placeholder="File content">Hello from Puter! This is a test file.</textarea>
+            <button onclick="writeFile()">Write File</button>
+
+            <h3 style="margin-top: 20px; margin-bottom: 10px;">Read File</h3>
+            <input id="readFileName" type="text" placeholder="File name to read" value="puter-test.txt">
+            <button onclick="readFile()">Read File</button>
+            <button onclick="listFiles()">List All Files</button>
+
+            <div id="fsResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- KV Store Card -->
+        <div class="card">
+            <h2>💾 Key-Value Storage</h2>
+            <div id="kvStatus" class="status pending">Ready</div>
+
+            <h3 style="margin-top: 20px; margin-bottom: 10px;">Set Value</h3>
+            <input id="kvKey" type="text" placeholder="Key (e.g., username)" value="test-key">
+            <input id="kvValue" type="text" placeholder="Value" value="Hello Puter KV Store!">
+            <button onclick="setKV()">Set Key-Value</button>
+
+            <h3 style="margin-top: 20px; margin-bottom: 10px;">Get Value</h3>
+            <input id="getKvKey" type="text" placeholder="Key to get" value="test-key">
+            <button onclick="getKV()">Get Value</button>
+            <button onclick="listKV()">List All Keys</button>
+
+            <div id="kvResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- Quick Tests Card -->
+        <div class="card">
+            <h2>⚡ Quick Tests</h2>
+            <button onclick="runAllTests()">Run All Tests</button>
+            <button onclick="clearAllResults()">Clear Results</button>
+            <div id="testResults" class="result" style="display: none; margin-top: 15px;"></div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize on load
+        window.addEventListener('load', () => {
+            checkAuthStatus();
+        });
+
+        // Authentication
+        async function checkAuthStatus() {
+            const statusEl = document.getElementById('authStatus');
+            try {
+                const isSignedIn = puter.auth.isSignedIn();
+
+                if (isSignedIn) {
+                    statusEl.className = 'status success';
+                    statusEl.textContent = '✓ Signed In';
+                    await showUserInfo();
+                } else {
+                    statusEl.className = 'status pending';
+                    statusEl.textContent = 'Not Signed In';
+                }
+            } catch (error) {
+                statusEl.className = 'status error';
+                statusEl.textContent = '✗ Error: ' + error.message;
+            }
+        }
+
+        async function handleAuth() {
+            try {
+                await puter.auth.signIn();
+                await checkAuthStatus();
+            } catch (error) {
+                alert('Sign in error: ' + error.message);
+            }
+        }
+
+        async function handleSignOut() {
+            try {
+                await puter.auth.signOut();
+                document.getElementById('userInfo').style.display = 'none';
+                await checkAuthStatus();
+            } catch (error) {
+                alert('Sign out error: ' + error.message);
+            }
+        }
+
+        async function showUserInfo() {
+            try {
+                const user = await puter.auth.getUser();
+                const userInfoEl = document.getElementById('userInfo');
+                userInfoEl.innerHTML = `
+                    <strong>User:</strong> ${user.username}<br>
+                    <strong>Email:</strong> ${user.email || 'Not set'}<br>
+                    <strong>UUID:</strong> ${user.uuid}
+                `;
+                userInfoEl.style.display = 'block';
+            } catch (error) {
+                alert('Error getting user info: ' + error.message);
+            }
+        }
+
+        // AI Chat
+        async function callAI() {
+            const prompt = document.getElementById('aiPrompt').value;
+            const model = document.getElementById('aiModel').value;
+            const statusEl = document.getElementById('aiStatus');
+            const resultEl = document.getElementById('aiResult');
+
+            if (!prompt.trim()) {
+                alert('Please enter a prompt!');
+                return;
+            }
+
+            try {
+                statusEl.className = 'status pending';
+                statusEl.textContent = 'Thinking...';
+                resultEl.style.display = 'block';
+                resultEl.textContent = '⏳ Waiting for response...';
+
+                const response = await puter.ai.chat(prompt, { model: model });
+
+                statusEl.className = 'status success';
+                statusEl.textContent = '✓ Complete';
+                resultEl.textContent = response;
+            } catch (error) {
+                statusEl.className = 'status error';
+                statusEl.textContent = '✗ Error';
+                resultEl.textContent = 'Error: ' + error.message;
+            }
+        }
+
+        async function streamAI() {
+            const prompt = document.getElementById('aiPrompt').value;
+            const model = document.getElementById('aiModel').value;
+            const statusEl = document.getElementById('aiStatus');
+            const resultEl = document.getElementById('aiResult');
+
+            if (!prompt.trim()) {
+                alert('Please enter a prompt!');
+                return;
+            }
+
+            try {
+                statusEl.className = 'status pending';
+                statusEl.textContent = 'Streaming...';
+                resultEl.style.display = 'block';
+                resultEl.textContent = '';
+
+                for await (const chunk of puter.ai.chat(prompt, { model: model, stream: true })) {
+                    resultEl.textContent += chunk;
+                }
+
+                statusEl.className = 'status success';
+                statusEl.textContent = '✓ Complete';
+            } catch (error) {
+                statusEl.className = 'status error';
+                statusEl.textContent = '✗ Error';
+                resultEl.textContent = 'Error: ' + error.message;
+            }
+        }
+
+        // File System
+        async function writeFile() {
+            const fileName = document.getElementById('fileName').value;
+            const content = document.getElementById('fileContent').value;
+            const statusEl = document.getElementById('fsStatus');
+            const resultEl = document.getElementById('fsResult');
+
+            try {
+                statusEl.className = 'status pending';
+                statusEl.textContent = 'Writing...';
+
+                await puter.fs.write(fileName, content);
+
+                statusEl.className = 'status success';
+                statusEl.textContent = '✓ Success';
+                resultEl.style.display = 'block';
+                resultEl.textContent = `File "${fileName}" written successfully!`;
+            } catch (error) {
+                statusEl.className = 'status error';
+                statusEl.textContent = '✗ Error';
+                resultEl.style.display = 'block';
+                resultEl.textContent = 'Error: ' + error.message;
+            }
+        }
+
+        async function readFile() {
+            const fileName = document.getElementById('readFileName').value;
+            const statusEl = document.getElementById('fsStatus');
+            const resultEl = document.getElementById('fsResult');
+
+            try {
+                statusEl.className = 'status pending';
+                statusEl.textContent = 'Reading...';
+
+                const file = await puter.fs.read(fileName);
+                const content = await file.text();
+
+                statusEl.className = 'status success';
+                statusEl.textContent = '✓ Success';
+                resultEl.style.display = 'block';
+                resultEl.textContent = `File: ${fileName}\n\nContent:\n${content}`;
+            } catch (error) {
+                statusEl.className = 'status error';
+                statusEl.textContent = '✗ Error';
+                resultEl.style.display = 'block';
+                resultEl.textContent = 'Error: ' + error.message;
+            }
+        }
+
+        async function listFiles() {
+            const statusEl = document.getElementById('fsStatus');
+            const resultEl = document.getElementById('fsResult');
+
+            try {
+                statusEl.className = 'status pending';
+                statusEl.textContent = 'Listing...';
+
+                const files = await puter.fs.readdir('/');
+
+                statusEl.className = 'status success';
+                statusEl.textContent = '✓ Success';
+                resultEl.style.display = 'block';
+                resultEl.textContent = `Files (${files.length}):\n\n` + files.map(f => `📄 ${f.name}`).join('\n');
+            } catch (error) {
+                statusEl.className = 'status error';
+                statusEl.textContent = '✗ Error';
+                resultEl.style.display = 'block';
+                resultEl.textContent = 'Error: ' + error.message;
+            }
+        }
+
+        // KV Store
+        async function setKV() {
+            const key = document.getElementById('kvKey').value;
+            const value = document.getElementById('kvValue').value;
+            const statusEl = document.getElementById('kvStatus');
+            const resultEl = document.getElementById('kvResult');
+
+            try {
+                statusEl.className = 'status pending';
+                statusEl.textContent = 'Setting...';
+
+                await puter.kv.set(key, value);
+
+                statusEl.className = 'status success';
+                statusEl.textContent = '✓ Success';
+                resultEl.style.display = 'block';
+                resultEl.textContent = `Set: ${key} = ${value}`;
+            } catch (error) {
+                statusEl.className = 'status error';
+                statusEl.textContent = '✗ Error';
+                resultEl.style.display = 'block';
+                resultEl.textContent = 'Error: ' + error.message;
+            }
+        }
+
+        async function getKV() {
+            const key = document.getElementById('getKvKey').value;
+            const statusEl = document.getElementById('kvStatus');
+            const resultEl = document.getElementById('kvResult');
+
+            try {
+                statusEl.className = 'status pending';
+                statusEl.textContent = 'Getting...';
+
+                const value = await puter.kv.get(key);
+
+                statusEl.className = 'status success';
+                statusEl.textContent = '✓ Success';
+                resultEl.style.display = 'block';
+                resultEl.textContent = `Key: ${key}\nValue: ${value || '(not found)'}`;
+            } catch (error) {
+                statusEl.className = 'status error';
+                statusEl.textContent = '✗ Error';
+                resultEl.style.display = 'block';
+                resultEl.textContent = 'Error: ' + error.message;
+            }
+        }
+
+        async function listKV() {
+            const statusEl = document.getElementById('kvStatus');
+            const resultEl = document.getElementById('kvResult');
+
+            try {
+                statusEl.className = 'status pending';
+                statusEl.textContent = 'Listing...';
+
+                const keys = await puter.kv.list();
+
+                statusEl.className = 'status success';
+                statusEl.textContent = '✓ Success';
+                resultEl.style.display = 'block';
+                resultEl.textContent = `Keys (${keys.length}):\n\n` + keys.join('\n');
+            } catch (error) {
+                statusEl.className = 'status error';
+                statusEl.textContent = '✗ Error';
+                resultEl.style.display = 'block';
+                resultEl.textContent = 'Error: ' + error.message;
+            }
+        }
+
+        // Quick Tests
+        async function runAllTests() {
+            const resultEl = document.getElementById('testResults');
+            resultEl.style.display = 'block';
+            resultEl.textContent = 'Running tests...\n\n';
+
+            const tests = [];
+
+            // Test 1: AI Chat
+            try {
+                resultEl.textContent += '[1/4] Testing AI Chat... ';
+                const response = await puter.ai.chat('Say "Test passed!" in exactly 2 words.', { model: 'gpt-4o-mini' });
+                resultEl.textContent += '✓ PASS\n  Response: ' + response.substring(0, 50) + '\n\n';
+                tests.push(true);
+            } catch (error) {
+                resultEl.textContent += '✗ FAIL\n  Error: ' + error.message + '\n\n';
+                tests.push(false);
+            }
+
+            // Test 2: File Write
+            try {
+                resultEl.textContent += '[2/4] Testing File Write... ';
+                await puter.fs.write('test-file.txt', 'Test content from automated test');
+                resultEl.textContent += '✓ PASS\n\n';
+                tests.push(true);
+            } catch (error) {
+                resultEl.textContent += '✗ FAIL\n  Error: ' + error.message + '\n\n';
+                tests.push(false);
+            }
+
+            // Test 3: File Read
+            try {
+                resultEl.textContent += '[3/4] Testing File Read... ';
+                const file = await puter.fs.read('test-file.txt');
+                const content = await file.text();
+                resultEl.textContent += '✓ PASS\n  Content length: ' + content.length + '\n\n';
+                tests.push(true);
+            } catch (error) {
+                resultEl.textContent += '✗ FAIL\n  Error: ' + error.message + '\n\n';
+                tests.push(false);
+            }
+
+            // Test 4: KV Store
+            try {
+                resultEl.textContent += '[4/4] Testing KV Store... ';
+                await puter.kv.set('test-key', 'test-value-' + Date.now());
+                const value = await puter.kv.get('test-key');
+                resultEl.textContent += '✓ PASS\n  Retrieved: ' + value + '\n\n';
+                tests.push(true);
+            } catch (error) {
+                resultEl.textContent += '✗ FAIL\n  Error: ' + error.message + '\n\n';
+                tests.push(false);
+            }
+
+            // Summary
+            const passed = tests.filter(Boolean).length;
+            const total = tests.length;
+            resultEl.textContent += '='.repeat(60) + '\n';
+            resultEl.textContent += `Results: ${passed}/${total} tests passed (${((passed/total)*100).toFixed(0)}%)\n`;
+            resultEl.textContent += '='.repeat(60);
+        }
+
+        function clearAllResults() {
+            ['aiResult', 'fsResult', 'kvResult', 'testResults'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.style.display = 'none';
+                    el.textContent = '';
+                }
+            });
+        }
+
+        // Log ready status
+        console.log('🎉 Puter.js loaded and ready!');
+        console.log('💡 Try the demos above or use puter.* directly in console');
+    </script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "omnipotent": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "C:/Users/scarm/omnipotent-mcp",
+        "run",
+        "server.py"
+      ],
+      "env": {}
+    }
+  }
+}

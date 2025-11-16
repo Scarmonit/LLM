@@ -1,0 +1,135 @@
+# Desktop Automation MCP Server - Docker Image
+# Browser automation and UI testing with Puppeteer
+
+FROM node:20
+
+# Install Chromium, X11 virtual framebuffer, and dependencies
+RUN apt-get update && apt-get install -y \
+    chromium \
+    xvfb \
+    x11vnc \
+    fluxbox \
+    wmctrl \
+    fonts-liberation \
+    libnss3 \
+    libatk-bridge2.0-0 \
+    libdrm2 \
+    libxkbcommon0 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxrandr2 \
+    libgbm1 \
+    libasound2 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Create package.json with Puppeteer
+RUN echo '{"name":"desktop-automation-mcp","version":"1.0.0","type":"module","dependencies":{"@modelcontextprotocol/sdk":"^1.0.4","puppeteer":"^21.0.0"}}' > package.json
+
+# Install dependencies (Puppeteer will download Chromium)
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+RUN npm install --omit=dev
+
+# Create desktop automation MCP server script
+RUN cat > desktop-automation-mcp-server.js << 'EOF'
+#!/usr/bin/env node
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import puppeteer from 'puppeteer';
+
+class DesktopAutomationServer {
+  constructor() {
+    this.server = new Server(
+      { name: 'desktop-automation-mcp', version: '1.0.0' },
+      { capabilities: { tools: {} } }
+    );
+    this.browser = null;
+    this.page = null;
+    this.setupHandlers();
+  }
+
+  setupHandlers() {
+    this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
+      tools: [
+        {
+          name: 'browser_navigate',
+          description: 'Navigate browser to URL',
+          inputSchema: {
+            type: 'object',
+            properties: { url: { type: 'string', description: 'URL to navigate to' } },
+            required: ['url']
+          }
+        },
+        {
+          name: 'browser_screenshot',
+          description: 'Take screenshot of current page',
+          inputSchema: { type: 'object', properties: {} }
+        },
+        {
+          name: 'browser_click',
+          description: 'Click element by selector',
+          inputSchema: {
+            type: 'object',
+            properties: { selector: { type: 'string', description: 'CSS selector' } },
+            required: ['selector']
+          }
+        }
+      ]
+    }));
+
+    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+      try {
+        if (!this.browser) {
+          this.browser = await puppeteer.launch({
+            executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
+            headless: true,
+            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+          });
+          this.page = await this.browser.newPage();
+        }
+
+        switch (request.params.name) {
+          case 'browser_navigate':
+            await this.page.goto(request.params.arguments.url, { waitUntil: 'networkidle0' });
+            return { content: [{ type: 'text', text: 'Navigation successful' }] };
+          case 'browser_screenshot':
+            const screenshot = await this.page.screenshot({ encoding: 'base64' });
+            return { content: [{ type: 'text', text: `Screenshot: data:image/png;base64,${screenshot}` }] };
+          case 'browser_click':
+            await this.page.click(request.params.arguments.selector);
+            return { content: [{ type: 'text', text: 'Click successful' }] };
+          default:
+            throw new Error(`Unknown tool: ${request.params.name}`);
+        }
+      } catch (error) {
+        return { content: [{ type: 'text', text: `Error: ${error.message}` }], isError: true };
+      }
+    });
+  }
+
+  async run() {
+    const transport = new StdioServerTransport();
+    await this.server.connect(transport);
+    process.on('SIGINT', async () => {
+      if (this.browser) await this.browser.close();
+      process.exit(0);
+    });
+  }
+}
+
+const server = new DesktopAutomationServer();
+server.run().catch(console.error);
+EOF
+
+RUN chmod +x desktop-automation-mcp-server.js
+
+# Set environment variables
+ENV NODE_ENV=production
+ENV DISPLAY=:99
+
+# Start Xvfb and run MCP server
+CMD sh -c "Xvfb :99 -screen 0 1920x1080x24 -ac & sleep 2 && node desktop-automation-mcp-server.js"

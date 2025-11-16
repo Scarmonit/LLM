@@ -163,7 +163,9 @@ class MCPDoctorServer {
           content: [
             {
               type: 'text',
-              text: `Error: ${error.message}\n\nStack: ${error.stack}`,
+              text: `Error: ${error.message}
+
+Stack: ${error.stack}`,
             },
           ],
         };
@@ -319,14 +321,16 @@ class MCPDoctorServer {
       );
 
       // Fix 3: Missing description fields
-      const toolPattern = /{[\s\S]*?name:\s*['"]([^'"]+)['"][\s\S]*?}/g;
+      const toolPattern = /{[
+\s\S]*?name:\s*['"]([^'" ]+)['"][
+\s\S]*?}/g;
       if (!sourceCode.includes('description:')) {
         fixes.push('⚠️  Tools missing descriptions (manual fix recommended)');
       }
 
       // Fix 4: Invalid enum values
       sourceCode = sourceCode.replace(
-        /enum:\s*\[(.*?)\]/g,
+        /enum:\s*\[(.*?)(\s*)\]/g,
         (match, enumValues) => {
           if (!enumValues.includes('"') && !enumValues.includes("'")) {
             fixes.push('Fixed enum values: added quotes');
@@ -518,14 +522,15 @@ ${tools.map(tool => `        {
 ${tools.map(tool => `          case '${tool}':
             return await this.${this.toCamelCase(tool)}(args);`).join('\n')}
           default:
-            throw new Error(\`Unknown tool: \${name}\`);
+            throw new Error(\`Unknown tool: ${name}\`);
         }
       } catch (error) {
         return {
           content: [
             {
               type: 'text',
-              text: \`Error: \${error.message}\`,
+              text: 
+`Error: ${error.message}`,
             },
           ],
           isError: true,
@@ -540,13 +545,12 @@ ${tools.map(tool => `  async ${this.toCamelCase(tool)}(args) {
       content: [
         {
           type: 'text',
-          text: \`${tool} executed with: \${JSON.stringify(args)}\`,
+          text: 
+`${tool} executed with: ${JSON.stringify(args)}`,
         },
       ],
     };
-  }`).join('\n\n')}
-
-  async run() {
+  }`).join('\n\n')}  async run() {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
     console.error('${server_name} MCP server running on stdio');

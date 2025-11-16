@@ -1,0 +1,181 @@
+version: '3.8'
+
+name: mcp-production
+
+networks:
+  mcp-network:
+    driver: bridge
+
+volumes:
+  omnipotent-data:
+  a2a-data:
+  prometheus-data:
+  grafana-data:
+
+services:
+  # ============================================================================
+  # OMNIPOTENT MCP SERVER - Production
+  # ============================================================================
+  omnipotent-mcp:
+    build:
+      context: ../../omnipotent-mcp
+      dockerfile: ../src/mcp/Dockerfile.omnipotent-final
+    image: omnipotent-mcp:production-v3
+    container_name: omnipotent-mcp-prod-v3
+    restart: unless-stopped
+    networks:
+      - mcp-network
+    volumes:
+      - omnipotent-data:/app/data
+      - ../../omnipotent-mcp/server_production.py:/app/server.py:ro
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONOPTIMIZE=1
+      - LOG_LEVEL=INFO
+      - MAX_FILE_SIZE=104857600
+      - MAX_RESPONSE_SIZE=10485760
+      - CACHE_TTL=60
+      - HTTP_POOL_SIZE=20
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+  # ============================================================================
+  # A2A UNIFIED MCP SERVER - Production
+  # ============================================================================
+  a2a-unified-mcp:
+    build:
+      context: ../../unified-intelligent-mcp
+      dockerfile: ../src/mcp/Dockerfile.a2a-unified-final
+    image: a2a-unified-mcp:production-v3
+    container_name: a2a-unified-mcp-prod-v3
+    restart: unless-stopped
+    networks:
+      - mcp-network
+    volumes:
+      - a2a-data:/app/data
+      - ../../unified-intelligent-mcp/server_production.py:/app/server.py:ro
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONOPTIMIZE=1
+      - A2A_DATA_DIR=/app/data
+      - LOG_LEVEL=INFO
+      - CACHE_TTL=3600
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 1.5G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+  # ============================================================================
+  # PROMETHEUS - Metrics Collection
+  # ============================================================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: mcp-prometheus
+    restart: unless-stopped
+    networks:
+      - mcp-network
+    ports:
+      - "9090:9090"
+    volumes:
+      - prometheus-data:/prometheus
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+
+  # ============================================================================
+  # GRAFANA - Monitoring Dashboard
+  # ============================================================================
+  grafana:
+    image: grafana/grafana:latest
+    container_name: mcp-grafana
+    restart: unless-stopped
+    networks:
+      - mcp-network
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://localhost:3000
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+
+  # ============================================================================
+  # REDIS - Caching Layer (Optional)
+  # ============================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: mcp-redis
+    restart: unless-stopped
+    networks:
+      - mcp-network
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis.conf:/usr/local/etc/redis/redis.conf:ro
+    command: redis-server /usr/local/etc/redis/redis.conf
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M

@@ -1,0 +1,202 @@
+{
+  "cleanupPeriodDays": 30,
+  "env": {
+    "CLAUDE_CODE_ENABLE_TELEMETRY": "0",
+    "BASH_DEFAULT_TIMEOUT_MS": "300000",
+    "BASH_MAX_TIMEOUT_MS": "600000",
+    "MCP_TIMEOUT": "30000",
+    "MCP_TOOL_TIMEOUT": "60000",
+    "MAX_MCP_OUTPUT_TOKENS": "4000",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "true",
+    "CLAUDE_BASH_NO_LOGIN": "0",
+    "USE_BUILTIN_RIPGREP": "1",
+    "NODE_ENV": "development",
+    "CLAUDE_CODE_GIT_BASH_PATH": "C:\\Program Files\\git\\bin\\bash.exe",
+    "DISABLE_AUTOUPDATER": "false",
+    "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "8192"
+  },
+  "includeCoAuthoredBy": true,
+  "permissions": {
+    "allow": [
+      "*",
+      "Bash(*)",
+      "mcp__*"
+    ],
+    "deny": [],
+    "ask": []
+  },
+  "bypassPermissionsMode": true,
+  "dangerouslySkipPermissions": true,
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "printf '\\n[Session Complete: %s]\\n' \"$(date)\" >> ~/.claude/logs/session-$(date +%Y%m%d).log",
+            "timeout": 5000
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "printf '\\n[Session Started: %s]\\n' \"$(date)\" >> ~/.claude/logs/session-$(date +%Y%m%d).log",
+            "timeout": 5000
+          }
+        ]
+      }
+    ]
+  },
+  "disableAllHooks": false,
+  "spinnerTipsEnabled": true,
+  "alwaysThinkingEnabled": true,
+  "autoCompactEnabled": true,
+  "mcpServers": {
+    "MCP_DOCKER": {
+      "command": "docker",
+      "args": ["mcp", "gateway", "run"],
+      "env": {
+        "LOCALAPPDATA": "C:\\Users\\scarm\\AppData\\Local",
+        "ProgramData": "C:\\ProgramData",
+        "ProgramFiles": "C:\\Program Files"
+      },
+      "type": "stdio"
+    },
+    "PREFECT": {
+      "command": "uvx",
+      "args": ["--from", "prefect-mcp", "prefect-mcp-server"],
+      "env": {
+        "PREFECT_API_KEY": "${PREFECT_API_KEY}",
+        "PREFECT_API_URL": "${PREFECT_API_URL}"
+      },
+      "type": "stdio"
+    },
+    "GITHUB_ALL": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e",
+        "GITHUB_PERSONAL_ACCESS_TOKEN",
+        "ghcr.io/github/github-mcp-server"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+      },
+      "type": "stdio"
+    },
+    "GITHUB_REPOS": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/x/repos"
+    },
+    "GITHUB_ISSUES_PRS": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "headers": {
+        "X-MCP-Toolsets": "issues,pull_requests,projects"
+      }
+    },
+    "GITHUB_COPILOT": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/x/copilot"
+    },
+    "GITHUB_SECURITY": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "headers": {
+        "X-MCP-Toolsets": "code_security,secret_protection,dependabot,security_advisories"
+      }
+    },
+    "GITHUB_DEVOPS": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "headers": {
+        "X-MCP-Toolsets": "actions,repos,git"
+      }
+    },
+    "GITHUB_READONLY": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/readonly"
+    },
+    "GITHUB_DOCKER": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e",
+        "GITHUB_PERSONAL_ACCESS_TOKEN",
+        "ghcr.io/github/github-mcp-server"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+      },
+      "type": "stdio"
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "C:\\Users\\scarm"],
+      "type": "stdio"
+    },
+    "memory": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"],
+      "type": "stdio"
+    },
+    "sequential-thinking": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"],
+      "type": "stdio"
+    },
+    "omnipotent": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "--privileged",
+        "-v",
+        "/var/run/docker.sock:/var/run/docker.sock",
+        "-v",
+        "C:\\Users\\scarm:/workspace",
+        "-e",
+        "WORKSPACE_DIR=/workspace",
+        "ghcr.io/modelcontextprotocol/omnipotent-mcp:latest"
+      ],
+      "type": "stdio"
+    },
+    "ide": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-vscode"],
+      "type": "stdio"
+    },
+    "brave-search": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-brave-search"],
+      "env": {
+        "BRAVE_API_KEY": ""
+      },
+      "type": "stdio"
+    },
+    "postgres": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres", "postgresql://localhost/postgres"],
+      "type": "stdio"
+    },
+    "puppeteer": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-puppeteer"],
+      "type": "stdio"
+    },
+    "sqlite": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sqlite", "--db-path", "C:\\Users\\scarm\\memory.sqlite"],
+      "type": "stdio"
+    }
+  }
+}

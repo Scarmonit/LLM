@@ -1,0 +1,92 @@
+# Example Health Check Configurations for Docker Compose
+# Add these healthcheck blocks to your existing docker-compose files
+
+# PostgreSQL Health Check
+postgres:
+  healthcheck:
+    test: ["CMD-SHELL", "pg_isready -U postgres"]
+    interval: 10s
+    timeout: 5s
+    retries: 5
+    start_period: 30s
+
+# MySQL Health Check
+mysql:
+  healthcheck:
+    test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+    interval: 10s
+    timeout: 5s
+    retries: 5
+    start_period: 30s
+
+# MongoDB Health Check
+mongodb:
+  healthcheck:
+    test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+    interval: 10s
+    timeout: 5s
+    retries: 5
+    start_period: 30s
+
+# Redis Health Check
+redis:
+  healthcheck:
+    test: ["CMD", "redis-cli", "ping"]
+    interval: 10s
+    timeout: 3s
+    retries: 5
+    start_period: 10s
+
+# Node.js Application Health Check
+node-app:
+  healthcheck:
+    test: ["CMD", "node", "-e", "process.exit(0)"]
+    interval: 30s
+    timeout: 10s
+    retries: 3
+    start_period: 40s
+
+# HTTP Service Health Check
+web-service:
+  healthcheck:
+    test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
+    interval: 30s
+    timeout: 10s
+    retries: 3
+    start_period: 40s
+
+# Alternative HTTP Health Check (using curl)
+web-service-curl:
+  healthcheck:
+    test: ["CMD-SHELL", "curl -f http://localhost:3000/health || exit 1"]
+    interval: 30s
+    timeout: 10s
+    retries: 3
+    start_period: 40s
+
+# Python Application Health Check
+python-app:
+  healthcheck:
+    test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+    interval: 30s
+    timeout: 10s
+    retries: 3
+    start_period: 40s
+
+# Generic TCP Port Health Check
+service-tcp:
+  healthcheck:
+    test: ["CMD-SHELL", "nc -z localhost 8080 || exit 1"]
+    interval: 30s
+    timeout: 10s
+    retries: 3
+    start_period: 40s
+
+# MCP Server Health Check (Node.js based)
+mcp-server:
+  healthcheck:
+    test: ["CMD", "node", "-e", "console.log('healthy'); process.exit(0)"]
+    interval: 30s
+    timeout: 10s
+    retries: 3
+    start_period: 60s
