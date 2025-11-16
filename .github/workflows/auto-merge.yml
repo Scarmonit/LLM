@@ -21,13 +21,13 @@ jobs:
       contents: read
       pull-requests: read
       checks: read
-    
+
     # Skip draft PRs
     if: github.event.pull_request.draft == false
-    
+
     outputs:
       auto_merge_ready: ${{ steps.gate.outputs.auto_merge_ready }}
-    
+
     steps:
       - name: Check if PR is draft
         run: |
@@ -47,13 +47,13 @@ jobs:
               repo: context.repo.repo,
               pull_number: context.issue.number
             });
-            
+
             console.log(`PR #${pr.number}: ${pr.title}`);
             console.log(`State: ${pr.state}`);
             console.log(`Mergeable: ${pr.mergeable}`);
             console.log(`Mergeable state: ${pr.mergeable_state}`);
             console.log(`Head SHA: ${pr.head.sha}`);
-            
+
             core.setOutput('head_sha', pr.head.sha);
             core.setOutput('mergeable', pr.mergeable);
             core.setOutput('mergeable_state', pr.mergeable_state);
@@ -65,42 +65,52 @@ jobs:
         with:
           script: |
             const head_sha = '${{ steps.pr.outputs.head_sha }}';
-            
+
             // Get check runs for this commit
-            const { data: checkRuns } = await github.rest.checks.listForRef({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              ref: head_sha
-            });
-            
-            console.log(`Found ${checkRuns.check_runs.length} check runs`);
-            
+            const { data: checkRuns } =
+              await github.rest.checks.listForRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: head_sha
+              });
+
+            console.log(
+              `Found ${checkRuns.check_runs.length} check runs`
+            );
+
             let failing = [];
             let pending = [];
             let success = [];
             let aiReviewFound = false;
             let aiReviewPassed = false;
-            
+
             for (const run of checkRuns.check_runs) {
-              console.log(`Check: ${run.name} - Status: ${run.status} - Conclusion: ${run.conclusion}`);
-              
+              console.log(
+                `Check: ${run.name} - ` +
+                `Status: ${run.status} - ` +
+                `Conclusion: ${run.conclusion}`
+              );
+
               // Track AI Code Review check specifically
               if (run.name === 'AI Code Review') {
                 aiReviewFound = true;
-                if (run.status === 'completed' && run.conclusion === 'success') {
+                if (run.status === 'completed' &&
+                    run.conclusion === 'success') {
                   aiReviewPassed = true;
                 }
               }
-              
+
               if (run.status !== 'completed') {
                 pending.push(run.name);
-              } else if (run.conclusion === 'failure' || run.conclusion === 'cancelled' || run.conclusion === 'timed_out') {
+              } else if (run.conclusion === 'failure' ||
+                         run.conclusion === 'cancelled' ||
+                         run.conclusion === 'timed_out') {
                 failing.push(run.name);
               } else if (run.conclusion === 'success') {
                 success.push(run.name);
               }
             }
-            
+
             core.setOutput('failing_count', failing.length);
             core.setOutput('pending_count', pending.length);
             core.setOutput('success_count', success.length);
@@ -108,7 +118,7 @@ jobs:
             core.setOutput('pending_checks', pending.join(', '));
             core.setOutput('ai_review_found', aiReviewFound);
             core.setOutput('ai_review_passed', aiReviewPassed);
-            
+
             return {
               failing,
               pending,
@@ -123,27 +133,36 @@ jobs:
         with:
           script: |
             const head_sha = '${{ steps.pr.outputs.head_sha }}';
-            
+
             // Get check suites for this commit
-            const { data: checkSuites } = await github.rest.checks.listSuitesForRef({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              ref: head_sha
-            });
-            
-            console.log(`Found ${checkSuites.check_suites.length} check suites`);
-            
+            const { data: checkSuites } =
+              await github.rest.checks.listSuitesForRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: head_sha
+              });
+
+            console.log(
+              `Found ${checkSuites.check_suites.length} check suites`
+            );
+
             let allPassed = true;
             for (const suite of checkSuites.check_suites) {
-              console.log(`Suite: ${suite.app.name} - Status: ${suite.status} - Conclusion: ${suite.conclusion}`);
-              
+              console.log(
+                `Suite: ${suite.app.name} - ` +
+                `Status: ${suite.status} - ` +
+                `Conclusion: ${suite.conclusion}`
+              );
+
               if (suite.status === 'completed') {
-                if (suite.conclusion !== 'success' && suite.conclusion !== 'neutral' && suite.conclusion !== 'skipped') {
+                if (suite.conclusion !== 'success' &&
+                    suite.conclusion !== 'neutral' &&
+                    suite.conclusion !== 'skipped') {
                   allPassed = false;
                 }
               }
             }
-            
+
             core.setOutput('all_suites_passed', allPassed);
             return checkSuites;
 
@@ -154,63 +173,79 @@ jobs:
           PENDING_COUNT="${{ steps.checks.outputs.pending_count }}"
           MERGEABLE="${{ steps.pr.outputs.mergeable }}"
           AI_REVIEW_FOUND="${{ steps.checks.outputs.ai_review_found }}"
-          AI_REVIEW_PASSED="${{ steps.checks.outputs.ai_review_passed }}"
-          
+          AI_REVIEW_PASSED="${{
+            steps.checks.outputs.ai_review_passed
+          }}"
+
           echo "## Auto-merge Gate Status" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           # Check if there are failing checks
           if [ "$FAILING_COUNT" -gt 0 ]; then
             echo "❌ **Status: NOT READY**" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "**Reason:** $FAILING_COUNT check(s) failing" >> $GITHUB_STEP_SUMMARY
+            echo "**Reason:** $FAILING_COUNT check(s) failing" \
+              >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "Failing checks: ${{ steps.checks.outputs.failing_checks }}" >> $GITHUB_STEP_SUMMARY
+            echo "Failing checks: ${{
+              steps.checks.outputs.failing_checks
+            }}" >> $GITHUB_STEP_SUMMARY
             echo "auto_merge_ready=false" >> $GITHUB_OUTPUT
             exit 1
           fi
-          
+
           # Check if there are pending checks
           if [ "$PENDING_COUNT" -gt 0 ]; then
             echo "⏳ **Status: PENDING**" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "**Reason:** $PENDING_COUNT check(s) still running" >> $GITHUB_STEP_SUMMARY
+            echo "**Reason:** $PENDING_COUNT check(s) still running" \
+              >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "Pending checks: ${{ steps.checks.outputs.pending_checks }}" >> $GITHUB_STEP_SUMMARY
+            echo "Pending checks: ${{
+              steps.checks.outputs.pending_checks
+            }}" >> $GITHUB_STEP_SUMMARY
             echo "auto_merge_ready=false" >> $GITHUB_OUTPUT
             exit 0
           fi
-          
+
           # Check mergeable state
           if [ "$MERGEABLE" != "true" ]; then
             echo "❌ **Status: NOT READY**" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "**Reason:** PR is not mergeable" >> $GITHUB_STEP_SUMMARY
+            echo "**Reason:** PR is not mergeable" \
+              >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "Mergeable state: ${{ steps.pr.outputs.mergeable_state }}" >> $GITHUB_STEP_SUMMARY
+            echo "Mergeable state: ${{
+              steps.pr.outputs.mergeable_state
+            }}" >> $GITHUB_STEP_SUMMARY
             echo "auto_merge_ready=false" >> $GITHUB_OUTPUT
             exit 1
           fi
-          
-          # Optionally check AI Code Review (informational, not blocking by default)
+
+          # Check AI Code Review (informational, not blocking)
           if [ "$AI_REVIEW_FOUND" == "true" ]; then
             if [ "$AI_REVIEW_PASSED" == "true" ]; then
-              echo "✅ AI Code Review: Passed" >> $GITHUB_STEP_SUMMARY
+              echo "✅ AI Code Review: Passed" \
+                >> $GITHUB_STEP_SUMMARY
             else
-              echo "⚠️ AI Code Review: Not passed (informational)" >> $GITHUB_STEP_SUMMARY
+              echo "⚠️ AI Code Review: Not passed (informational)" \
+                >> $GITHUB_STEP_SUMMARY
             fi
           else
-            echo "ℹ️ AI Code Review: Not configured" >> $GITHUB_STEP_SUMMARY
+            echo "ℹ️ AI Code Review: Not configured" \
+              >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ **Status: READY FOR AUTO-MERGE**" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Status: READY FOR AUTO-MERGE**" \
+            >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- All CI checks passed" >> $GITHUB_STEP_SUMMARY
           echo "- PR is mergeable" >> $GITHUB_STEP_SUMMARY
           echo "- Not in draft mode" >> $GITHUB_STEP_SUMMARY
-          
+
           echo "auto_merge_ready=true" >> $GITHUB_OUTPUT
+
 
   auto-merge:
     name: Execute Auto-merge
@@ -219,12 +254,12 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    
+
     # Only run if PR has auto-merge label AND ready check passed
     if: |
       needs.ready.outputs.auto_merge_ready == 'true' &&
       contains(github.event.pull_request.labels.*.name, 'auto-merge')
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -267,27 +302,35 @@ jobs:
           script: |
             const fs = require('fs');
             const statusFile = 'merge_status.json';
-            
+
             if (fs.existsSync(statusFile)) {
-              const status = JSON.parse(fs.readFileSync(statusFile, 'utf8'));
-              
+              const status = JSON.parse(
+                fs.readFileSync(statusFile, 'utf8')
+              );
+
               let body = '## 🔀 Auto-Merge Status\n\n';
-              
+
               if (status.merged) {
                 body += '✅ **Successfully merged!**\n\n';
                 body += `Merge method: ${status.merge_method}\n`;
               } else {
                 body += '❌ **Unable to merge**\n\n';
                 body += `Reason: ${status.reason}\n\n`;
-                
+
                 if (status.validation) {
                   body += '### Validation Details\n';
-                  body += `- Mergeable: ${status.validation.mergeable}\n`;
-                  body += `- Checks passed: ${status.validation.checks_passed}\n`;
-                  body += `- State: ${status.validation.mergeable_state}\n`;
+                  body += `- Mergeable: ${
+                    status.validation.mergeable
+                  }\n`;
+                  body += `- Checks passed: ${
+                    status.validation.checks_passed
+                  }\n`;
+                  body += `- State: ${
+                    status.validation.mergeable_state
+                  }\n`;
                 }
               }
-              
+
               github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
