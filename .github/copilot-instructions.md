@@ -85,6 +85,87 @@ In addition to Copilot, this repository supports **external AI code review syste
 - `.github/workflows/tests.yml` - Python test suite
 - `.github/workflows/pylint.yml` - Code quality checks
 
+## Task Understanding and Issue Templates
+
+### Using Issue Templates
+
+This repository provides structured issue templates to ensure clear, actionable tasks:
+
+**Available Templates** (in `.github/ISSUE_TEMPLATE/`):
+- **bug_fix.md** - For reporting and fixing bugs
+- **feature_request.md** - For proposing new features
+- **refactoring.md** - For code improvements without functionality changes
+- **documentation.md** - For documentation updates
+
+### When Assigned an Issue
+
+1. **Read the Complete Issue**
+   - Understand the problem statement
+   - Review acceptance criteria carefully
+   - Note complexity indicators
+   - Check affected files listed
+
+2. **Verify You Have Context**
+   - All referenced files exist and are accessible
+   - Required dependencies are available
+   - Related issues/PRs are understood
+   - Testing strategy is clear
+
+3. **Plan Before Coding**
+   - Outline your approach
+   - Identify minimal changes needed
+   - Plan testing strategy
+   - Consider edge cases
+
+4. **Follow Acceptance Criteria Exactly**
+   - Treat acceptance criteria as requirements
+   - Don't add unrelated improvements
+   - Verify each criterion is met
+   - Test each requirement
+
+### Creating Well-Scoped Tasks
+
+If you need to create sub-tasks or related issues:
+
+**✅ Good Task Scoping:**
+```markdown
+Title: [BUG] OllamaProvider timeout on responses >1000 tokens
+Problem: Specific, reproducible issue
+Acceptance Criteria: Measurable, testable requirements
+Affected Files: Concrete file paths
+Complexity: Realistic estimate (small/medium/large)
+```
+
+**❌ Bad Task Scoping:**
+```markdown
+Title: Fix timeouts
+Problem: Vague description
+Acceptance: "Make it work better"
+Files: Not specified
+```
+
+See `CONTRIBUTING.md` for complete task scoping guidelines with examples.
+
+### PR Template Usage
+
+When creating pull requests, use `.github/PULL_REQUEST_TEMPLATE/pull_request_template.md`:
+
+**Required Sections:**
+- Description of changes
+- Link to related issue
+- Type of change (bug fix, feature, docs, etc.)
+- Testing performed with results
+- Code quality verification
+- Documentation updates
+
+**Before Submitting PR:**
+- [ ] All tests pass
+- [ ] Code quality checks pass (pylint)
+- [ ] Documentation updated
+- [ ] Real verification performed (not mock)
+- [ ] Security scan clean
+- [ ] Checklist completed
+
 ## Critical Rules (DO NOT VIOLATE)
 
 ### 1. Use Available Resources FIRST
@@ -237,19 +318,23 @@ See `docs/CURRENT_STATE.md` for latest status.
 
 **Before starting work:**
 - `.github/copilot-instructions.md` (this file)
-- `docs/LESSONS_LEARNED.md`
-- `docs/CURRENT_STATE.md`
-- `docs/ARCHITECTURE.md`
+- `CONTRIBUTING.md` - Contribution guidelines and task scoping
+- `docs/LESSONS_LEARNED.md` - Past mistakes to avoid
+- `docs/CURRENT_STATE.md` - Current system status
+- `docs/ARCHITECTURE.md` - System design
 
 **During work:**
 - `VERIFICATION.md` - How to test
 - `SYSTEMATIC_BREAKDOWN.md` - Methodology
 - `requirements.txt` - Dependencies
+- `.github/ISSUE_TEMPLATE/` - Issue templates for reference
+- `.github/PULL_REQUEST_TEMPLATE/` - PR template
 
 **After completing work:**
 - Update all `docs/` files
 - Run full verification
 - Document what worked/failed
+- Complete PR checklist
 
 ## Communication Protocol
 
@@ -298,5 +383,5 @@ Work is complete when:
 
 **This document is living and should be updated by each Copilot session that learns something new.**
 
-Last Updated: 2025-11-15
-Last Updated By: Copilot (autonomous agent implementation)
+Last Updated: 2025-11-16
+Last Updated By: Copilot (GitHub Copilot best practices implementation)

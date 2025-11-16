@@ -102,6 +102,58 @@ pip install -r requirements.txt
 # Copilot custom instructions work, but MCP servers require DevContainer
 ```
 
+### Practical Examples: Working with Copilot
+
+#### Creating Copilot-Friendly Issues
+
+**✅ Good - Structured with clear acceptance criteria:**
+```markdown
+Title: [BUG] OllamaProvider timeout on responses >1000 tokens
+
+Problem: Timeout occurs when processing large responses
+Acceptance Criteria:
+- Increase timeout to 120s for large requests
+- Add exponential backoff retry logic
+- Tests verify timeout handling
+Affected Files: src/llm_framework/providers/ollama_provider.py
+```
+
+**❌ Bad - Vague and unscoped:**
+```markdown
+Title: Fix the timeouts
+Description: The provider times out sometimes
+```
+
+**Why the difference matters**: Well-scoped issues enable Copilot to deliver precise solutions faster with fewer iterations.
+
+#### Using Issue Templates
+
+This repository provides structured templates in `.github/ISSUE_TEMPLATE/`:
+- **Bug Fix** - Problem statements, reproduction steps, acceptance criteria
+- **Feature Request** - User stories, component impact, design considerations  
+- **Refactoring** - Current problems, improvements, backward compatibility
+- **Documentation** - Target audience, examples needed, topics to cover
+
+**To create an issue:**
+1. Go to "Issues" → "New issue"
+2. Select appropriate template
+3. Fill in all sections
+4. Assign to @copilot for AI assistance
+
+#### Delegating Tasks to Copilot
+
+```markdown
+<!-- Assign issue to @copilot with clear context -->
+@copilot Please implement the retry logic described in the acceptance criteria.
+
+Context:
+- See OllamaProvider.generate() for similar implementation
+- Follow patterns in docs/ARCHITECTURE.md
+- Run tests: pytest tests/test_claude_provider.py -v
+
+Expected outcome: All acceptance criteria met, tests passing, no mock data
+```
+
 ### Using the Custom Copilot Agent
 
 Ask domain-specific questions:
@@ -116,7 +168,11 @@ Ask domain-specific questions:
 - **playwright**: Browser automation and testing
 - **github-mcp-server**: Enhanced GitHub repository operations
 
-**Learn More**: See [Copilot Enhancement Guide](docs/COPILOT_GUIDE.md) for complete details on custom instructions, MCP servers, and best practices.
+**Learn More**: 
+- [Contributing Guide](CONTRIBUTING.md) - Task scoping guidelines with good/bad examples
+- [Copilot Instructions](.github/copilot-instructions.md) - Complete Copilot guidance
+- [Issue Templates](.github/ISSUE_TEMPLATE/) - Structured templates for clear tasks
+- [Copilot Enhancement Guide](docs/COPILOT_GUIDE.md) - Advanced features and best practices
 
 ## Development Environment
 
