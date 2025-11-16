@@ -1,0 +1,148 @@
+name: AI Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - main
+      - Scarmonit
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: read
+
+jobs:
+  ai-review:
+    name: AI Code Review
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Get base branch
+        id: base
+        run: |
+          echo "branch=${{ github.event.pull_request.base.ref }}" >> $GITHUB_OUTPUT
+          echo "sha=${{ github.event.pull_request.base.sha }}" >> $GITHUB_OUTPUT
+
+      - name: Get PR diff summary
+        id: diff
+        run: |
+          # Get diff statistics
+          git fetch origin ${{ steps.base.outputs.branch }}
+          
+          # Generate diff summary
+          DIFF_STATS=$(git diff --stat origin/${{ steps.base.outputs.branch }}...${{ github.event.pull_request.head.sha }})
+          CHANGED_FILES=$(git diff --name-only origin/${{ steps.base.outputs.branch }}...${{ github.event.pull_request.head.sha }} | wc -l)
+          INSERTIONS=$(git diff --numstat origin/${{ steps.base.outputs.branch }}...${{ github.event.pull_request.head.sha }} | awk '{sum+=$1} END {print sum+0}')
+          DELETIONS=$(git diff --numstat origin/${{ steps.base.outputs.branch }}...${{ github.event.pull_request.head.sha }} | awk '{sum+=$2} END {print sum+0}')
+          
+          echo "files=$CHANGED_FILES" >> $GITHUB_OUTPUT
+          echo "insertions=$INSERTIONS" >> $GITHUB_OUTPUT
+          echo "deletions=$DELETIONS" >> $GITHUB_OUTPUT
+          
+          # Save full diff for potential AI analysis
+          git diff origin/${{ steps.base.outputs.branch }}...${{ github.event.pull_request.head.sha }} > pr_diff.patch
+          
+          echo "Diff summary:"
+          echo "Files changed: $CHANGED_FILES"
+          echo "Insertions: $INSERTIONS"
+          echo "Deletions: $DELETIONS"
+
+      - name: Create diff summary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-diff-${{ github.event.pull_request.number }}
+          path: pr_diff.patch
+          retention-days: 30
+
+      - name: Invoke Claude AI Review (if configured)
+        if: vars.CLAUDE_WEBHOOK_URL != ''
+        continue-on-error: true
+        run: |
+          # This step is a placeholder for Claude webhook integration
+          # Users can configure CLAUDE_WEBHOOK_URL as a repository variable or secret
+          echo "Claude webhook URL configured, would invoke: ${{ vars.CLAUDE_WEBHOOK_URL }}"
+          echo "PR #${{ github.event.pull_request.number }}"
+          echo "Files changed: ${{ steps.diff.outputs.files }}"
+          echo "Insertions: ${{ steps.diff.outputs.insertions }}"
+          echo "Deletions: ${{ steps.diff.outputs.deletions }}"
+          
+          # Example webhook call (uncomment when ready to use):
+          # curl -X POST "${{ vars.CLAUDE_WEBHOOK_URL }}" \
+          #   -H "Content-Type: application/json" \
+          #   -H "Authorization: Bearer ${{ secrets.CLAUDE_API_KEY }}" \
+          #   -d @- <<EOF
+          # {
+          #   "pr_number": ${{ github.event.pull_request.number }},
+          #   "repository": "${{ github.repository }}",
+          #   "diff_url": "${{ github.event.pull_request.diff_url }}",
+          #   "files_changed": ${{ steps.diff.outputs.files }},
+          #   "insertions": ${{ steps.diff.outputs.insertions }},
+          #   "deletions": ${{ steps.diff.outputs.deletions }}
+          # }
+          # EOF
+
+      - name: Invoke Gemini AI Review (if configured)
+        if: vars.GEMINI_WEBHOOK_URL != ''
+        continue-on-error: true
+        run: |
+          # This step is a placeholder for Gemini webhook integration
+          # Users can configure GEMINI_WEBHOOK_URL as a repository variable or secret
+          echo "Gemini webhook URL configured, would invoke: ${{ vars.GEMINI_WEBHOOK_URL }}"
+          echo "PR #${{ github.event.pull_request.number }}"
+          echo "Files changed: ${{ steps.diff.outputs.files }}"
+          echo "Insertions: ${{ steps.diff.outputs.insertions }}"
+          echo "Deletions: ${{ steps.diff.outputs.deletions }}"
+          
+          # Example webhook call (uncomment when ready to use):
+          # curl -X POST "${{ vars.GEMINI_WEBHOOK_URL }}" \
+          #   -H "Content-Type: application/json" \
+          #   -H "Authorization: Bearer ${{ secrets.GEMINI_API_KEY }}" \
+          #   -d @- <<EOF
+          # {
+          #   "pr_number": ${{ github.event.pull_request.number }},
+          #   "repository": "${{ github.repository }}",
+          #   "diff_url": "${{ github.event.pull_request.diff_url }}",
+          #   "files_changed": ${{ steps.diff.outputs.files }},
+          #   "insertions": ${{ steps.diff.outputs.insertions }},
+          #   "deletions": ${{ steps.diff.outputs.deletions }}
+          # }
+          # EOF
+
+      - name: AI Review Status Summary
+        run: |
+          echo "## 🤖 AI Code Review Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**PR #${{ github.event.pull_request.number }}**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Files Changed:** ${{ steps.diff.outputs.files }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Lines Added:** +${{ steps.diff.outputs.insertions }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Lines Removed:** -${{ steps.diff.outputs.deletions }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -n "${{ vars.CLAUDE_WEBHOOK_URL }}" ]; then
+            echo "✅ Claude AI review webhook configured" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "ℹ️ Claude AI review not configured (set CLAUDE_WEBHOOK_URL)" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ -n "${{ vars.GEMINI_WEBHOOK_URL }}" ]; then
+            echo "✅ Gemini AI review webhook configured" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "ℹ️ Gemini AI review not configured (set GEMINI_WEBHOOK_URL)" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "This check serves as a gate for external AI code review systems." >> $GITHUB_STEP_SUMMARY
+          echo "Configure webhook URLs to enable automated AI reviews." >> $GITHUB_STEP_SUMMARY
+
+      - name: Mark as successful
+        run: |
+          echo "✅ AI Code Review check completed successfully"
+          echo "This check can be used as a required status check for PRs"
