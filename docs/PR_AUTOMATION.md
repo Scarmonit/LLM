@@ -379,3 +379,8 @@ When adding new PR automation features:
 ## License
 
 MIT License - Same as parent project
+
+---
+
+Last Updated: 2025-11-16  
+Last Updated By: GitHub Copilot (PR Automation Documentation)
