@@ -392,6 +392,28 @@ All options include:
 
 See [deployment/DEPLOYMENT.md](deployment/DEPLOYMENT.md) for complete instructions.
 
+## Documentation
+
+Comprehensive documentation is available in the [`docs/`](docs/) directory:
+
+### Core Documentation
+- **[Architecture](docs/ARCHITECTURE.md)** - System design and architectural patterns
+- **[Current State](docs/CURRENT_STATE.md)** - Latest status and verified configuration
+- **[Lessons Learned](docs/LESSONS_LEARNED.md)** - Best practices and common pitfalls
+
+### Development Guides
+- **[Copilot Guide](docs/COPILOT_GUIDE.md)** - Working with GitHub Copilot
+- **[PR Automation](docs/PR_AUTOMATION.md)** - Automated pull request workflows
+- **[Contributing Guide](CONTRIBUTING.md)** - Task scoping and contribution guidelines
+
+### Environment & Security
+- **[Claude Code Environment](docs/CLAUDE_CODE_ENVIRONMENT.md)** (1,068 lines) - Complete technical specifications
+  - Architecture, models, tools, sandboxing, context management, MCP integration
+- **[Environment Restrictions](docs/ENVIRONMENT_RESTRICTIONS.md)** (603 lines) - Official security documentation
+  - Linux kernel security, containers, virtualization, application sandboxing, standards
+
+See the **[Documentation Index](docs/README.md)** for the complete list and navigation guide.
+
 ## License
 
 MIT License

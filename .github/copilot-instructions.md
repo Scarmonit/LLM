@@ -322,6 +322,8 @@ See `docs/CURRENT_STATE.md` for latest status.
 - `docs/LESSONS_LEARNED.md` - Past mistakes to avoid
 - `docs/CURRENT_STATE.md` - Current system status
 - `docs/ARCHITECTURE.md` - System design
+- `docs/CLAUDE_CODE_ENVIRONMENT.md` - Claude Code environment specs
+- `docs/ENVIRONMENT_RESTRICTIONS.md` - Security and sandboxing documentation
 
 **During work:**
 - `VERIFICATION.md` - How to test
@@ -329,6 +331,7 @@ See `docs/CURRENT_STATE.md` for latest status.
 - `requirements.txt` - Dependencies
 - `.github/ISSUE_TEMPLATE/` - Issue templates for reference
 - `.github/PULL_REQUEST_TEMPLATE/` - PR template
+- `docs/README.md` - Documentation index
 
 **After completing work:**
 - Update all `docs/` files
