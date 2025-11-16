@@ -754,9 +754,9 @@ Track Copilot enhancement impact:
 - [Repository Instructions](.github/copilot-instructions.md)
 - [Custom Agent Configuration](.github/agents/my-agent.agent.md)
 - [DevContainer Config](.devcontainer/devcontainer.json)
-- [Architecture Guide](ARCHITECTURE.md)
-- [Current State](CURRENT_STATE.md)
-- [Lessons Learned](LESSONS_LEARNED.md)
+- [Architecture Guide](./ARCHITECTURE.md)
+- [Current State](./CURRENT_STATE.md)
+- [Lessons Learned](./LESSONS_LEARNED.md)
 
 ### Tools & Servers
 
