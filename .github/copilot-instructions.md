@@ -25,6 +25,66 @@ This is an **LLM Multi-Provider Framework** with autonomous agent capabilities.
 - `src/llm_framework/orchestrator.py` - Agent management
 - `src/llm_framework/continuous_agent.py` - Continuous execution
 
+## GitHub Workflow & Code Review Process
+
+### Primary Code Reviewer: GitHub Copilot
+**GitHub Copilot is the primary, GitHub-native code reviewer for this repository.** It provides:
+- Inline code suggestions during development
+- Automated code review feedback on pull requests
+- Integration with GitHub's native review workflow
+- Context-aware improvements based on repository patterns
+
+### External AI Review Systems
+In addition to Copilot, this repository supports **external AI code review systems** via the `AI Code Review` workflow (`.github/workflows/ai-review.yml`):
+
+**Supported External AI Systems:**
+- **Claude AI** - Configured via `CLAUDE_WEBHOOK_URL` variable/secret
+- **Gemini AI** - Configured via `GEMINI_WEBHOOK_URL` variable/secret
+
+**How It Works:**
+1. The `AI Code Review` workflow runs on all PRs targeting `main` and `Scarmonit` branches
+2. It collects diff summaries and PR metadata
+3. If configured, it invokes external AI systems via webhooks
+4. The workflow completes as a **required status check** that gates auto-merge
+5. External AI feedback can be posted as PR comments (if configured)
+
+**Configuration:**
+- Set repository variables `CLAUDE_WEBHOOK_URL` and/or `GEMINI_WEBHOOK_URL` to enable
+- Optionally set corresponding API keys as secrets (`CLAUDE_API_KEY`, `GEMINI_API_KEY`)
+- The workflow is extensible - add new AI systems by following existing patterns
+
+### Pull Request Workflow
+
+**Recommended PR Lifecycle:**
+1. **Draft Phase** - Create PR as draft while work is in progress
+   - CI checks run but auto-merge gate is skipped
+   - Use this time for iterative development and testing
+   - Copilot and external AI can provide early feedback
+
+2. **Ready for Review** - Mark PR as "ready for review" when structurally complete
+   - Auto-merge gate (`ready` job) activates
+   - All CI checks must pass (tests, pylint, etc.)
+   - `AI Code Review` check must succeed
+   - PR must be mergeable (no conflicts)
+
+3. **Auto-merge** - Enable auto-merge in GitHub UI (Squash and merge)
+   - Once all checks are green, PR auto-merges
+   - Requires `auto-merge` label to be set
+   - Uses "Squash and merge" strategy by default
+
+**Auto-merge Gate Checks:**
+- ✅ PR is not in draft mode
+- ✅ All CI checks passed (no failures)
+- ✅ No pending checks (all completed)
+- ✅ PR is mergeable (no conflicts)
+- ℹ️ AI Code Review status (tracked but not blocking by default)
+
+**Workflows:**
+- `.github/workflows/ai-review.yml` - AI Code Review workflow (runs on PR events)
+- `.github/workflows/auto-merge.yml` - Auto-merge gate and execution
+- `.github/workflows/tests.yml` - Python test suite
+- `.github/workflows/pylint.yml` - Code quality checks
+
 ## Critical Rules (DO NOT VIOLATE)
 
 ### 1. Use Available Resources FIRST
