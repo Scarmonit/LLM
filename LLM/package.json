@@ -1,0 +1,12 @@
+{
+  "name": "llm-mcp-servers",
+  "version": "1.0.0",
+  "description": "MCP servers for AWS CLI and Terraform",
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4"
+  }
+}
