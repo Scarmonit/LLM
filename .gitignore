@@ -36,6 +36,21 @@ venv.bak/
 htmlcov/
 .tox/
 .hypothesis/
+coverage/
+.nyc_output/
+
+# Dependencies
+node_modules/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
 
 # IDEs
 .vscode/
@@ -48,6 +63,17 @@ htmlcov/
 .DS_Store
 Thumbs.db
 
-# Environment variables
-.env
-.env.local
+# Build
+build/
+dist/
+
+# Session data
+.claude-sessions/
+
+# Temporary
+tmp/
+temp/
+*.tmp
+
+# MCP
+.mcp-auth/
