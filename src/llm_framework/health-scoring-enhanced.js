@@ -10,10 +10,22 @@ export class EnhancedHealthScoring {
       targetResponseTime: 200,  // ms - adjust based on your requirements
       maxAcceptableResponseTime: 2000 // ms
     };
+    // Cache for health scores to improve performance
+    this.cache = new Map();
+    this.ttl = 5000; // 5 seconds cache TTL
   }
 
   calculateScore(stats, metadata = {}) {
     const now = Date.now();
+
+    // Check cache if provider ID is available
+    if (metadata && metadata.provider) {
+      const cached = this.cache.get(metadata.provider);
+      if (cached && (now - cached.timestamp < this.ttl)) {
+        return cached.result;
+      }
+    }
+
     const { 
       successRate = 1.0,
       avgResponseTime = 0,
@@ -63,7 +75,7 @@ export class EnhancedHealthScoring {
 
     const totalScore = successScore + responseScore + availabilityScore + recentPerformanceScore;
     
-    return {
+    const result = {
       score: Math.max(0, Math.min(100, Math.round(totalScore))),
       components: {
         success: successScore,
@@ -73,6 +85,16 @@ export class EnhancedHealthScoring {
       },
       verdict: this.getVerdict(totalScore)
     };
+
+    // Update cache
+    if (metadata && metadata.provider) {
+      this.cache.set(metadata.provider, {
+        timestamp: now,
+        result
+      });
+    }
+
+    return result;
   }
 
   calculateTrend(values) {

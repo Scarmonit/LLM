@@ -329,8 +329,8 @@ class ProviderProxy extends EventEmitter {
         health: this.metrics.healthChecks.get(name)
       }))
       .sort((a, b) => {
-        const aScore = this.calculateHealthScore(a);
-        const bScore = this.calculateHealthScore(b);
+        const aScore = this.calculateHealthScore(a, a.name);
+        const bScore = this.calculateHealthScore(b, b.name);
         return bScore - aScore;
       });
 
@@ -348,7 +348,7 @@ class ProviderProxy extends EventEmitter {
     throw new Error('All failover providers failed');
   }
 
-  calculateHealthScore(providerInfo) {
+  calculateHealthScore(providerInfo, providerName) {
     const {stats, health} = providerInfo;
     const scoreResult = this.healthScoring.calculateScore({
       successRate: stats ? stats.successRate : 1.0,
@@ -356,7 +356,7 @@ class ProviderProxy extends EventEmitter {
       totalRequests: stats ? stats.totalRequests : 0,
       lastCheck: health ? health.timestamp : Date.now(),
       recentResponseTimes: stats ? [] : [] // Simplified for now as we don't store recent times in metrics yet
-    });
+    }, { provider: providerName });
     return scoreResult.score;
   }
 
@@ -421,7 +421,7 @@ class ProviderProxy extends EventEmitter {
     for (const name of this.providers.keys()) {
       const stats = this.metrics.getProviderStats(name);
       const health = this.metrics.healthChecks.get(name);
-      const score = this.calculateHealthScore({stats, health});
+      const score = this.calculateHealthScore({stats, health}, name);
 
       report.providers[name] = {
         healthScore: score,

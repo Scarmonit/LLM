@@ -4,7 +4,7 @@
  * Auto-discovered by the Provider Proxy (Layer 5)
  */
 
-import axios from 'axios';
+import httpClient from '../http-client-optimized.js';
 
 class BlackboxProvider {
   constructor(config = {}) {
@@ -41,7 +41,7 @@ class BlackboxProvider {
     this.metrics.totalRequests++;
 
     try {
-      const response = await axios.post(
+      const response = await httpClient.post(
         this.url,
         {
           messages: [
@@ -68,9 +68,9 @@ class BlackboxProvider {
 
       // Extract response based on API format
       const text = response.data?.choices?.[0]?.message?.content
-                || response.data?.response
-                || response.data?.text
-                || JSON.stringify(response.data);
+        || response.data?.response
+        || response.data?.text
+        || JSON.stringify(response.data);
 
       return {
         text,
@@ -96,7 +96,7 @@ class BlackboxProvider {
    */
   async healthCheck() {
     try {
-      const response = await axios.get(this.url, {
+      const response = await httpClient.get(this.url, {
         headers: this.headers,
         timeout: 5000,
         validateStatus: (status) => status < 500 // Accept 4xx as "healthy" (auth errors are expected without valid request)
