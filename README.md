@@ -439,10 +439,43 @@ result = agent.execute("Your task here")
 
 ## Testing
 
+### Unit Tests
+
 Run tests with pytest:
 ```bash
 pytest tests/
 ```
+
+Expected: 100+ tests passing
+
+### Comprehensive Audit System 🔍
+
+The repository includes a comprehensive audit system that performs harsh testing across multiple dimensions:
+
+```bash
+# Run full audit
+PYTHONPATH=src python audit_system.py
+
+# Run specific category
+PYTHONPATH=src python audit_system.py --category security
+
+# Verbose mode with details
+PYTHONPATH=src python audit_system.py --verbose
+```
+
+**Audit Categories:**
+- **Code Quality**: Pylint (≥9.0), black formatting, imports, complexity, docstrings, type hints
+- **Security**: Hardcoded secrets, unsafe patterns, dependency vulnerabilities, SQL/command/path injection
+- **Performance**: Test execution time, import speed, memory usage, provider performance
+- **Integration**: Provider initialization, agent creation, full test suite, configuration
+- **Robustness**: Error handling, edge cases, invalid inputs, resource cleanup
+- **Documentation**: README quality, API docs, code examples, accuracy
+
+**Exit Codes:**
+- `0`: All critical/high severity tests passed
+- `1`: Critical/high severity issues found
+
+For complete documentation, see [Audit System Documentation](docs/AUDIT_SYSTEM.md).
 
 ## Project Structure
 
