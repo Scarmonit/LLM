@@ -1,0 +1,66 @@
+# LLM Framework Configuration Example (YAML)
+# Copy this file to config.yaml and customize for your setup
+
+# Provider Configuration
+# You can use ${VAR_NAME} syntax to reference environment variables
+providers:
+  # Anthropic Claude API
+  anthropic:
+    api_key: ${ANTHROPIC_API_KEY}  # Required for Claude
+    model: claude-3-sonnet-20240229  # Optional: specify model version
+    # temperature: 0.7  # Optional: override default temperature
+    # max_tokens: 1000  # Optional: override default max tokens
+
+  # OpenAI API (or compatible endpoints)
+  openai:
+    api_key: ${OPENAI_API_KEY}  # Required for OpenAI
+    # base_url: https://api.openai.com/v1  # Optional: for compatible APIs
+    # model: gpt-4  # Optional: specify model
+
+  # Ollama (local LLM)
+  ollama:
+    base_url: http://localhost:11434  # Ollama server URL
+    model: qwen2.5:0.5b  # Model to use (must be pulled)
+    # temperature: 0.7  # Optional: override default
+
+# Agent Configuration
+# Customize behavior of each agent type
+agents:
+  # Research Agent - optimized for factual accuracy
+  research:
+    temperature: 0.5  # Lower = more deterministic
+    max_tokens: 150  # Response length limit
+
+  # Coding Agent - optimized for code generation
+  coding:
+    temperature: 0.3  # More deterministic for code
+    max_tokens: 500  # Longer responses for code
+
+  # Writing Agent - optimized for creative content
+  writing:
+    temperature: 0.8  # Higher = more creative
+    max_tokens: 300  # Medium-length responses
+
+  # Code Review Agent - optimized for code analysis
+  code_review:
+    temperature: 0.3  # Deterministic analysis
+    max_tokens: 500  # Detailed reviews
+
+# GitHub Integration (optional)
+github:
+  token: ${GITHUB_TOKEN}  # GitHub personal access token
+  owner: Scarmonit  # Repository owner
+  repo: LLM  # Repository name
+  # auto_merge_label: auto-merge  # Label to trigger auto-merge
+  # review_on_pr: true  # Auto-review new PRs
+
+# Advanced Configuration (optional)
+# logging:
+#   level: INFO  # DEBUG, INFO, WARNING, ERROR
+#   file: llm_framework.log  # Log file path
+
+# Notes:
+# 1. Environment variables always override file settings
+# 2. ${VAR_NAME} syntax interpolates environment variables
+# 3. All sections are optional - use only what you need
+# 4. This file should NOT be committed (add to .gitignore)

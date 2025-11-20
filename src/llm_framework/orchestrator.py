@@ -10,15 +10,32 @@ from .providers.openai_compatible_provider import OpenAICompatibleProvider
 from .agents.research_agent import ResearchAgent
 from .agents.coding_agent import CodingAgent
 from .agents.writing_agent import WritingAgent
+from .config import Config
 
 
 class AgentOrchestrator:
     """Orchestrates multiple agents across different LLM providers."""
 
-    def __init__(self):
-        """Initialize the orchestrator."""
+    def __init__(
+        self, config: Optional[Config] = None, config_path: Optional[str] = None
+    ):
+        """Initialize the orchestrator.
+
+        Args:
+            config: Optional Config instance. If not provided, will create one.
+            config_path: Optional path to config file. Ignored if config is provided.
+        """
         self.providers: Dict[str, BaseProvider] = {}
         self.agents: Dict[str, Agent] = {}
+
+        # Initialize configuration
+        if config is not None:
+            self.config = config
+        elif config_path is not None:
+            self.config = Config(config_path)
+        else:
+            # Auto-discover config file or use empty config
+            self.config = Config()
 
     def add_provider(self, name: str, provider: BaseProvider):
         """
@@ -44,30 +61,36 @@ class AgentOrchestrator:
         """
         Setup default REAL LLM providers (no mock).
         Priority: Ollama (local) -> Claude -> OpenAI-compatible -> Intelligent Mock (fallback)
+
+        Uses configuration from config file if available, with environment variables
+        taking precedence.
         """
         # Try Ollama first (local, no API key needed, REAL LLM)
         try:
-            ollama = OllamaProvider()
+            ollama_config = self.config.get_provider_config("ollama")
+            ollama = OllamaProvider(**ollama_config)
             if ollama.is_available():
                 self.add_provider("ollama", ollama)
                 return  # Found real provider, done
         except Exception:
             pass
 
-        # Try Claude API (only if API key is set)
-        if os.getenv("ANTHROPIC_API_KEY"):
+        # Try Claude API (check config or env var)
+        anthropic_config = self.config.get_provider_config("anthropic")
+        if anthropic_config.get("api_key") or os.getenv("ANTHROPIC_API_KEY"):
             try:
-                claude = ClaudeProvider()
+                claude = ClaudeProvider(**anthropic_config)
                 if claude.is_available():
                     self.add_provider("claude", claude)
                     return  # Found real provider, done
             except Exception:
                 pass
 
-        # Try OpenAI-compatible API (ONLY if API key is explicitly set)
-        if os.getenv("OPENAI_API_KEY"):
+        # Try OpenAI-compatible API (check config or env var)
+        openai_config = self.config.get_provider_config("openai")
+        if openai_config.get("api_key") or os.getenv("OPENAI_API_KEY"):
             try:
-                openai = OpenAICompatibleProvider()
+                openai = OpenAICompatibleProvider(**openai_config)
                 if openai.is_available():
                     self.add_provider("openai", openai)
                     return  # Found real provider, done
@@ -77,7 +100,9 @@ class AgentOrchestrator:
         # Fallback to intelligent mock (for testing/demo when no real LLM available)
         # This provides contextual responses, not random data
         try:
-            from llm_framework.providers.intelligent_mock_provider import IntelligentMockProvider
+            from llm_framework.providers.intelligent_mock_provider import (
+                IntelligentMockProvider,
+            )
 
             mock = IntelligentMockProvider()
             self.add_provider("intelligent_mock", mock)
@@ -116,9 +141,42 @@ class AgentOrchestrator:
             )
 
         # Create default agents with REAL LLM
-        self.add_agent("research", ResearchAgent.create_default(provider))
-        self.add_agent("coding", CodingAgent.create_default(provider))
-        self.add_agent("writing", WritingAgent.create_default(provider))
+        # Get agent configs from config file if available
+        research_config = self.config.get_agent_config("research")
+        coding_config = self.config.get_agent_config("coding")
+        writing_config = self.config.get_agent_config("writing")
+
+        # Create agents with config overrides
+        research = ResearchAgent.create_default(provider)
+        if research_config:
+            research.config.temperature = research_config.get(
+                "temperature", research.config.temperature
+            )
+            research.config.max_tokens = research_config.get(
+                "max_tokens", research.config.max_tokens
+            )
+
+        coding = CodingAgent.create_default(provider)
+        if coding_config:
+            coding.config.temperature = coding_config.get(
+                "temperature", coding.config.temperature
+            )
+            coding.config.max_tokens = coding_config.get(
+                "max_tokens", coding.config.max_tokens
+            )
+
+        writing = WritingAgent.create_default(provider)
+        if writing_config:
+            writing.config.temperature = writing_config.get(
+                "temperature", writing.config.temperature
+            )
+            writing.config.max_tokens = writing_config.get(
+                "max_tokens", writing.config.max_tokens
+            )
+
+        self.add_agent("research", research)
+        self.add_agent("coding", coding)
+        self.add_agent("writing", writing)
 
     def get_agent(self, name: str) -> Optional[Agent]:
         """
@@ -171,7 +229,10 @@ class AgentOrchestrator:
         """
         return {
             "providers": {
-                name: {"name": provider.get_provider_name(), "available": provider.is_available()}
+                name: {
+                    "name": provider.get_provider_name(),
+                    "available": provider.is_available(),
+                }
                 for name, provider in self.providers.items()
             },
             "agents": {name: agent.get_status() for name, agent in self.agents.items()},

@@ -52,6 +52,11 @@ Thumbs.db
 .env
 .env.local
 
+# Configuration files (may contain secrets)
+config.yaml
+config.json
+config.yml
+
 # Node.js / JavaScript
 node_modules/
 npm-debug.log*
