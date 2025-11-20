@@ -87,6 +87,11 @@ Navigate to: **Settings** > **Secrets and variables** > **Actions** > **Variable
 ✅ Configured:
 - DOCKER_PASSWORD
 - DOCKER_USERNAME
+- - ANTHROPIC_API_KEY
+  - - OLLAMA_BASE_URL
+    - - CLAUDE_API_KEY
+      - - CLAUDE_WEBHOOK_URL (variable)
+        - - GEMINI_WEBHOOK_URL (variable)
 
 ❌ Missing (Need to be added):
 - ANTHROPIC_API_KEY
