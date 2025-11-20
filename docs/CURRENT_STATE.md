@@ -2,20 +2,49 @@
 
 > **Purpose:** Quick reference for current system status. Update this when making changes.
 
-**Last Updated:** 2025-11-16 03:13 UTC  
-**Last Updated By:** Copilot (GitHub Copilot best practices templates)
+**Last Updated:** 2025-11-20 08:10 UTC  
+**Last Updated By:** Copilot (Configuration file support feature)
 
 ## System Status: ✅ OPERATIONAL
 
 ### Quick Status
 - **Provider:** Ollama (qwen2.5:0.5b) ✅ Installed and working
 - **Agents:** 4 available (research, coding, writing, code_review) ✅
-- **Tests:** 52/52 passing ✅ (was 30/30)
-- **Code Quality:** Pylint 9.29/10 ✅
+- **Tests:** 61/61 passing ✅ (was 52/52)
+- **Code Quality:** Pylint 8.96/10 ✅
 - **Security:** 0 vulnerabilities ✅
 - **Production Runner:** `run_real_agents.py` ✅
 - **PR Automation:** ✅ Auto-review, validate, create, merge
 - **🤖 Copilot Enhancement:** ✅ Custom instructions, agent, MCP servers, and templates
+- **⚙️ Configuration:** ✅ YAML/JSON config files with env var support (NEW)
+
+## New Features (Latest Update)
+
+### Configuration File Support ⚙️
+- **Status:** ✅ Fully Implemented
+- **Formats:** YAML (`.yaml`, `.yml`) and JSON (`.json`)
+- **Location:** `./config.yaml` or `./config.json` (auto-discovered)
+- **Features:**
+  - Environment variable interpolation (`${VAR_NAME}` syntax)
+  - Precedence: env vars > config file
+  - Custom path support via `--config` flag
+  - Schema validation with clear error messages
+  - Backward compatible (env-only still works)
+- **Files:**
+  - `src/llm_framework/config.py` - Configuration management module
+  - `config.yaml.example` - YAML configuration template
+  - `config.json.example` - JSON configuration template
+  - `tests/test_config.py` - 24 comprehensive tests
+- **Usage:**
+  ```python
+  from llm_framework.orchestrator import AgentOrchestrator
+  
+  # Auto-discover config file
+  orch = AgentOrchestrator()
+  
+  # Or use explicit path
+  orch = AgentOrchestrator(config_path='/path/to/config.yaml')
+  ```
 
 ## Current Components
 

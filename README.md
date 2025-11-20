@@ -62,6 +62,113 @@ cd LLM
 pip install -r requirements.txt
 ```
 
+3. Configure the framework:
+
+   **Option 1: Configuration File (Recommended)**
+   ```bash
+   # Copy example config file
+   cp config.yaml.example config.yaml
+   
+   # Edit config.yaml with your settings
+   # Set API keys, models, agent parameters, etc.
+   ```
+
+   **Option 2: Environment Variables**
+   ```bash
+   # Set environment variables
+   export ANTHROPIC_API_KEY=your_key
+   export GITHUB_TOKEN=your_token
+   # See .env.example for more options
+   ```
+
+   **Note:** Environment variables override config file settings.
+
+## Configuration
+
+The framework supports flexible configuration through YAML/JSON files and environment variables.
+
+### Quick Start
+
+1. **Copy example config**:
+   ```bash
+   cp config.yaml.example config.yaml
+   # or for JSON
+   cp config.json.example config.json
+   ```
+
+2. **Edit your config** with your API keys and preferences
+3. **Run the framework** - it will auto-discover your config file
+
+### Configuration File Format
+
+**YAML Example** (`config.yaml`):
+```yaml
+providers:
+  anthropic:
+    api_key: ${ANTHROPIC_API_KEY}  # Use env var
+    model: claude-3-sonnet-20240229
+  
+  ollama:
+    base_url: http://localhost:11434
+    model: qwen2.5:0.5b
+
+agents:
+  research:
+    temperature: 0.5
+    max_tokens: 150
+  coding:
+    temperature: 0.3
+    max_tokens: 500
+
+github:
+  token: ${GITHUB_TOKEN}
+  owner: Scarmonit
+  repo: LLM
+```
+
+**JSON Example** (`config.json`):
+```json
+{
+  "providers": {
+    "anthropic": {
+      "api_key": "${ANTHROPIC_API_KEY}",
+      "model": "claude-3-sonnet-20240229"
+    }
+  },
+  "agents": {
+    "research": {
+      "temperature": 0.5,
+      "max_tokens": 150
+    }
+  }
+}
+```
+
+### Configuration Features
+
+- **Environment Variable Interpolation**: Use `${VAR_NAME}` syntax
+- **Auto-Discovery**: Automatically finds `config.yaml` or `config.json` 
+- **Custom Path**: Use `--config /path/to/config.yaml` flag
+- **Precedence**: Environment variables always override file settings
+- **Optional**: Config file is completely optional; env vars still work
+- **Format Support**: Both YAML (`.yaml`, `.yml`) and JSON (`.json`)
+
+### Using Config in Code
+
+```python
+from llm_framework.config import Config
+from llm_framework.orchestrator import AgentOrchestrator
+
+# Auto-discover config file
+orchestrator = AgentOrchestrator()
+
+# Or use explicit config file
+config = Config('/path/to/config.yaml')
+orchestrator = AgentOrchestrator(config=config)
+
+# Environment variables still work and override file settings
+```
+
 ## 🤖 Enhanced GitHub Copilot Integration
 
 This repository is configured with advanced GitHub Copilot features to make the AI assistant smarter and more context-aware:

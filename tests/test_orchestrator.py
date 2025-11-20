@@ -3,6 +3,7 @@
 import pytest
 from src.llm_framework.orchestrator import AgentOrchestrator
 from src.llm_framework.core.agent import Agent, AgentConfig
+from src.llm_framework.config import Config
 from tests.test_base_provider import MockProvider
 
 
@@ -11,6 +12,14 @@ def test_orchestrator_initialization():
     orchestrator = AgentOrchestrator()
     assert len(orchestrator.providers) == 0
     assert len(orchestrator.agents) == 0
+    assert orchestrator.config is not None  # Config should always be present
+
+
+def test_orchestrator_initialization_with_config():
+    """Test that orchestrator can be initialized with custom config."""
+    config = Config()
+    orchestrator = AgentOrchestrator(config=config)
+    assert orchestrator.config is config
 
 
 def test_orchestrator_add_provider():

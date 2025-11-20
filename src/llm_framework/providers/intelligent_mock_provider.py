@@ -3,7 +3,7 @@ Intelligent mock provider that generates contextual responses.
 Used ONLY when no real LLM is available (testing/demo).
 """
 
-from llm_framework.core.base_provider import BaseProvider
+from ..core.base_provider import BaseProvider
 
 
 class IntelligentMockProvider(BaseProvider):

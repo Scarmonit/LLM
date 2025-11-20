@@ -1,7 +1,7 @@
 """Code review agent for automated PR reviews."""
 
 from typing import Optional, Dict, Any, List
-from llm_framework.core.agent import Agent, AgentConfig
+from ..core.agent import Agent, AgentConfig
 
 
 def create_code_review_agent(provider) -> Agent:

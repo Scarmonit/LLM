@@ -1,0 +1,50 @@
+{
+  "_comment": "LLM Framework Configuration Example (JSON)",
+  "_note": "Copy this file to config.json and customize for your setup",
+
+  "providers": {
+    "anthropic": {
+      "api_key": "${ANTHROPIC_API_KEY}",
+      "model": "claude-3-sonnet-20240229"
+    },
+    "openai": {
+      "api_key": "${OPENAI_API_KEY}"
+    },
+    "ollama": {
+      "base_url": "http://localhost:11434",
+      "model": "qwen2.5:0.5b"
+    }
+  },
+
+  "agents": {
+    "research": {
+      "temperature": 0.5,
+      "max_tokens": 150
+    },
+    "coding": {
+      "temperature": 0.3,
+      "max_tokens": 500
+    },
+    "writing": {
+      "temperature": 0.8,
+      "max_tokens": 300
+    },
+    "code_review": {
+      "temperature": 0.3,
+      "max_tokens": 500
+    }
+  },
+
+  "github": {
+    "token": "${GITHUB_TOKEN}",
+    "owner": "Scarmonit",
+    "repo": "LLM"
+  },
+
+  "_notes": [
+    "Environment variables always override file settings",
+    "${VAR_NAME} syntax interpolates environment variables",
+    "All sections are optional - use only what you need",
+    "This file should NOT be committed (add to .gitignore)"
+  ]
+}
