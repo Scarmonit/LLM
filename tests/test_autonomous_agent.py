@@ -1,7 +1,6 @@
 """Tests for the AutonomousAgent base class."""
 
 import logging
-import pytest
 from src.llm_framework.autonomous_agent import (
     AutonomousAgent,
     CodeAnalysisAgent,
@@ -27,7 +26,7 @@ def test_autonomous_agent_initialization():
     assert agent.name == "test_agent"
     assert agent.agent == mock_agent
     assert agent.repo_path == "/tmp/test"
-    assert agent.work_log == []
+    assert not agent.work_log
     assert agent.running is False
 
 
