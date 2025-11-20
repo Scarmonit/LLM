@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import logging
 import os
 import sys
 
@@ -11,6 +12,13 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
 from llm_framework.orchestrator import AgentOrchestrator
 from llm_framework.github_integration import GitHubIntegration
 from llm_framework.agents.code_review_agent import create_code_review_agent, PRReviewer
+
+# Configure logging
+logging.basicConfig(
+    format='%(levelname)s: %(message)s',
+    level=logging.INFO
+)
+logger = logging.getLogger(__name__)
 
 
 def main():
@@ -22,8 +30,14 @@ def main():
     parser.add_argument(
         "--auto-approve", action="store_true", help="Auto-approve if no issues"
     )
+    parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose output")
 
     args = parser.parse_args()
+
+    # Set log level based on verbose flag
+    if args.verbose:
+        logger.setLevel(logging.DEBUG)
+        logging.getLogger().setLevel(logging.DEBUG)
 
     # Setup orchestrator and providers
     orchestrator = AgentOrchestrator()
@@ -32,7 +46,7 @@ def main():
     # Get available provider
     providers = orchestrator.list_providers()
     if not providers:
-        print("Error: No LLM provider available")
+        logger.error("No LLM provider available")
         sys.exit(1)
 
     provider = orchestrator.providers[providers[0]]
@@ -47,7 +61,7 @@ def main():
     reviewer = PRReviewer(agent, github)
 
     # Review the PR
-    print(f"Reviewing PR #{args.pr_number}...")
+    logger.info("Reviewing PR #%s...", args.pr_number)
     review_result = reviewer.review_pr(args.pr_number, auto_approve=args.auto_approve)
 
     # Save review summary
@@ -77,11 +91,11 @@ def main():
     with open("review_summary.json", "w", encoding="utf-8") as f:
         json.dump(summary, f, indent=2)
 
-    print("Review completed!")
+    logger.info("Review completed!")
     if review_result:
-        print(f"Review posted: {review_result.get('html_url', 'N/A')}")
+        logger.info("Review posted: %s", review_result.get('html_url', 'N/A'))
     else:
-        print("Failed to post review")
+        logger.error("Failed to post review")
 
     return 0 if review_result else 1
 

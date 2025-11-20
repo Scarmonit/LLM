@@ -2,6 +2,7 @@
 """CLI tool for creating pull requests."""
 
 import argparse
+import logging
 import os
 import sys
 
@@ -9,6 +10,13 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
 
 from llm_framework.github_integration import GitHubIntegration
+
+# Configure logging
+logging.basicConfig(
+    format='%(levelname)s: %(message)s',
+    level=logging.INFO
+)
+logger = logging.getLogger(__name__)
 
 
 def main():
@@ -21,16 +29,22 @@ def main():
     parser.add_argument("--draft", action="store_true", help="Create as draft PR")
     parser.add_argument("--repo-owner", help="Repository owner (default: from env)")
     parser.add_argument("--repo-name", help="Repository name (default: from env)")
+    parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose output")
 
     args = parser.parse_args()
+
+    # Set log level based on verbose flag
+    if args.verbose:
+        logger.setLevel(logging.DEBUG)
+        logging.getLogger().setLevel(logging.DEBUG)
 
     # Get repo info from args or environment
     repo_owner = args.repo_owner or os.getenv("GITHUB_REPO_OWNER")
     repo_name = args.repo_name or os.getenv("GITHUB_REPO_NAME")
 
     if not repo_owner or not repo_name:
-        print("Error: Repository owner and name required")
-        print(
+        logger.error("Repository owner and name required")
+        logger.error(
             "Provide via --repo-owner/--repo-name or set GITHUB_REPO_OWNER/GITHUB_REPO_NAME"
         )
         sys.exit(1)
@@ -39,10 +53,10 @@ def main():
     github = GitHubIntegration(repo_owner, repo_name)
 
     # Create PR
-    print(f"Creating PR: {args.title}")
-    print(f"  From: {args.head}")
-    print(f"  To: {args.base}")
-    print(f"  Draft: {args.draft}")
+    logger.info("Creating PR: %s", args.title)
+    logger.info("  From: %s", args.head)
+    logger.info("  To: %s", args.base)
+    logger.info("  Draft: %s", args.draft)
 
     pr_result = github.create_pull_request(
         title=args.title,
@@ -55,13 +69,13 @@ def main():
     if pr_result:
         pr_number = pr_result.get("number")
         pr_url = pr_result.get("html_url")
-        print(f"\n✅ Pull request created successfully!")
-        print(f"  PR #{pr_number}")
-        print(f"  URL: {pr_url}")
+        logger.info("✅ Pull request created successfully!")
+        logger.info("  PR #%s", pr_number)
+        logger.info("  URL: %s", pr_url)
         return 0
 
-    print("\n❌ Failed to create pull request")
-    print("  Check your GitHub token and repository permissions")
+    logger.error("Failed to create pull request")
+    logger.error("Check your GitHub token and repository permissions")
     return 1
 
 

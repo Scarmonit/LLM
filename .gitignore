@@ -66,3 +66,8 @@ tmp/
 temp/
 *.tmp
 .mcp-auth/
+
+# Script output files
+pr_validation.json
+review_summary.json
+merge_status.json
