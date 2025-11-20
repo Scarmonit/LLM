@@ -2,8 +2,8 @@
 
 import pytest
 from unittest.mock import Mock, patch
-from llm_framework.agents.code_review_agent import create_code_review_agent, PRReviewer
-from llm_framework.providers.intelligent_mock_provider import IntelligentMockProvider
+from src.llm_framework.agents.code_review_agent import create_code_review_agent, PRReviewer
+from src.llm_framework.providers.intelligent_mock_provider import IntelligentMockProvider
 
 
 class TestCodeReviewAgent:

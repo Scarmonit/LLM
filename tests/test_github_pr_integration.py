@@ -2,7 +2,7 @@
 
 import pytest
 from unittest.mock import Mock, patch
-from llm_framework.github_integration import GitHubIntegration
+from src.llm_framework.github_integration import GitHubIntegration
 
 
 class TestGitHubPRIntegration:
