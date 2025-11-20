@@ -25,6 +25,7 @@ Categories:
 
 import sys
 import os
+import re
 import time
 import subprocess
 import json
@@ -851,12 +852,24 @@ class AuditSystem:
         start = time.time()
         
         returncode, stdout, stderr = self.run_command([
-            "python", "-m", "pytest", "tests/", "-v", "--tb=short", "-q"
+            "python", "-m", "pytest", "tests/", "-v", "--tb=short"
         ])
         
-        # Count passed tests
+        # Count passed tests (look for both formats)
         passed_count = stdout.count(" PASSED")
+        if passed_count == 0:
+            # Try to extract from summary line (e.g., "100 passed in 3.21s")
+            import re as regex_module
+            match = regex_module.search(r'(\d+) passed', stdout)
+            if match:
+                passed_count = int(match.group(1))
+        
         failed_count = stdout.count(" FAILED")
+        if failed_count == 0:
+            import re as regex_module
+            match = regex_module.search(r'(\d+) failed', stdout)
+            if match:
+                failed_count = int(match.group(1))
         
         passed = returncode == 0 and failed_count == 0
         severity = Severity.CRITICAL if not passed else Severity.INFO
