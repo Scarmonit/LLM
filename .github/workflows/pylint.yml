@@ -8,12 +8,7 @@ on:
       - 'tests/**'
       - 'requirements.txt'
       - '.github/workflows/pylint.yml'
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - 'GITHUB_SECRETS.md'
-      - 'WORKFLOW_OPTIMIZATION.md'
-jobs:
+  jobs:
     build:
     runs-on: ubuntu-latest
     strategy:
