@@ -1,14 +1,34 @@
-"""GitHub integration for agents to communicate with Copilot."""
+"""GitHub integration for agents to communicate with Copilot.
 
+This module centralizes HTTP handling (rate limiting, retries, caching) for
+GitHub API calls so the CLI tools can provide reliable automation. Public
+methods intentionally return ``None`` on failure to keep callers simple; errors
+are logged with context for later debugging.
+"""
+
+import logging
 import os
-from typing import Optional, Dict, Any
+import threading
+import time
+from typing import Any, Dict, Optional
+
 import requests
+
+logger = logging.getLogger(__name__)
 
 
 class GitHubIntegration:
     """Integration with GitHub for agent communication."""
 
-    def __init__(self, repo_owner: str, repo_name: str, token: Optional[str] = None):
+    def __init__(
+        self,
+        repo_owner: str,
+        repo_name: str,
+        token: Optional[str] = None,
+        max_retries: int = 3,
+        backoff_factor: float = 1.5,
+        cache_ttl: int = 60,
+    ):
         """
         Initialize GitHub integration.
 
@@ -21,6 +41,94 @@ class GitHubIntegration:
         self.repo_name = repo_name
         self.token = token or os.getenv("GITHUB_TOKEN")
         self.base_url = "https://api.github.com"
+        self.max_retries = max_retries
+        self.backoff_factor = backoff_factor
+        self.cache_ttl = cache_ttl
+        self._session = requests.Session()
+        self._cache_lock = threading.Lock()
+        self._cache: dict[str, tuple[float, Any]] = {}
+
+    def _auth_headers(self) -> Dict[str, str]:
+        headers = {
+            "Accept": "application/vnd.github.v3+json",
+        }
+        if self.token:
+            headers["Authorization"] = f"token {self.token}"
+        else:
+            logger.warning("Proceeding without GitHub token; may be rate limited")
+        return headers
+
+    def _cache_get(self, key: str) -> Optional[Any]:
+        if not self.cache_ttl:
+            return None
+        with self._cache_lock:
+            entry = self._cache.get(key)
+            if not entry:
+                return None
+            expires_at, value = entry
+            if expires_at < time.time():
+                self._cache.pop(key, None)
+                return None
+            return value
+
+    def _cache_set(self, key: str, value: Any) -> None:
+        if not self.cache_ttl:
+            return
+        with self._cache_lock:
+            self._cache[key] = (time.time() + self.cache_ttl, value)
+
+    def _request(self, method: str, url: str, cache_key: Optional[str] = None, **kwargs):
+        if cache_key:
+            cached = self._cache_get(cache_key)
+            if cached is not None:
+                logger.debug("Cache hit for %s", cache_key)
+                return cached
+
+        headers = kwargs.pop("headers", {})
+        headers.update(self._auth_headers())
+
+        backoff = self.backoff_factor
+        request_func = getattr(requests, method.lower(), requests.request)
+        for attempt in range(1, self.max_retries + 1):
+            try:
+                response = request_func(
+                    url, headers=headers, timeout=kwargs.pop("timeout", 10), **kwargs
+                )
+                if response.status_code == 429:
+                    retry_after = response.headers.get("Retry-After")
+                    wait_time = float(retry_after) if retry_after else backoff
+                    logger.warning(
+                        "Rate limited on %s %s (attempt %s/%s); retrying in %.1fs",
+                        method,
+                        url,
+                        attempt,
+                        self.max_retries,
+                        wait_time,
+                    )
+                    time.sleep(wait_time)
+                    backoff *= 2
+                    continue
+                response.raise_for_status()
+                data = response.json()
+                if cache_key:
+                    self._cache_set(cache_key, data)
+                return data
+            except requests.exceptions.RequestException as exc:
+                if attempt >= self.max_retries:
+                    logger.error("GitHub API request failed after retries: %s", exc)
+                    return None
+                logger.warning(
+                    "GitHub API request error on %s %s (attempt %s/%s): %s; retrying in %.1fs",
+                    method,
+                    url,
+                    attempt,
+                    self.max_retries,
+                    exc,
+                    backoff,
+                )
+                time.sleep(backoff)
+                backoff *= 2
+        return None
 
     def create_issue(
         self, title: str, body: str, labels: Optional[list] = None
@@ -36,26 +144,13 @@ class GitHubIntegration:
         Returns:
             Issue data if successful, None otherwise
         """
-        if not self.token:
-            return None
-
         url = f"{self.base_url}/repos/{self.repo_owner}/{self.repo_name}/issues"
-        headers = {
-            "Authorization": f"token {self.token}",
-            "Accept": "application/vnd.github.v3+json",
-        }
-
         data = {"title": title, "body": body}
 
         if labels:
             data["labels"] = labels
 
-        try:
-            response = requests.post(url, headers=headers, json=data, timeout=10)
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException:
-            return None
+        return self._request("POST", url, json=data)
 
     def create_comment(self, issue_number: int, comment: str) -> Optional[Dict[str, Any]]:
         """
@@ -68,26 +163,13 @@ class GitHubIntegration:
         Returns:
             Comment data if successful, None otherwise
         """
-        if not self.token:
-            return None
-
         url = (
             f"{self.base_url}/repos/{self.repo_owner}/{self.repo_name}"
             f"/issues/{issue_number}/comments"
         )
-        headers = {
-            "Authorization": f"token {self.token}",
-            "Accept": "application/vnd.github.v3+json",
-        }
-
         data = {"body": comment}
 
-        try:
-            response = requests.post(url, headers=headers, json=data, timeout=10)
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException:
-            return None
+        return self._request("POST", url, json=data)
 
     def send_copilot_prompt(
         self, prompt: str, agent_name: str, issue_number: Optional[int] = None
@@ -134,23 +216,9 @@ class GitHubIntegration:
         Returns:
             PR data if successful, None otherwise
         """
-        if not self.token:
-            return None
-
         url = f"{self.base_url}/repos/{self.repo_owner}/{self.repo_name}/pulls"
-        headers = {
-            "Authorization": f"token {self.token}",
-            "Accept": "application/vnd.github.v3+json",
-        }
-
         data = {"title": title, "body": body, "head": head, "base": base, "draft": draft}
-
-        try:
-            response = requests.post(url, headers=headers, json=data, timeout=10)
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException:
-            return None
+        return self._request("POST", url, json=data)
 
     def get_pull_request(self, pr_number: int) -> Optional[Dict[str, Any]]:
         """
@@ -162,21 +230,8 @@ class GitHubIntegration:
         Returns:
             PR data if successful, None otherwise
         """
-        if not self.token:
-            return None
-
         url = f"{self.base_url}/repos/{self.repo_owner}/{self.repo_name}/pulls/{pr_number}"
-        headers = {
-            "Authorization": f"token {self.token}",
-            "Accept": "application/vnd.github.v3+json",
-        }
-
-        try:
-            response = requests.get(url, headers=headers, timeout=10)
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException:
-            return None
+        return self._request("GET", url, cache_key=f"pr:{pr_number}")
 
     def create_review(
         self,
@@ -197,29 +252,16 @@ class GitHubIntegration:
         Returns:
             Review data if successful, None otherwise
         """
-        if not self.token:
-            return None
-
         url = (
             f"{self.base_url}/repos/{self.repo_owner}/{self.repo_name}"
             f"/pulls/{pr_number}/reviews"
         )
-        headers = {
-            "Authorization": f"token {self.token}",
-            "Accept": "application/vnd.github.v3+json",
-        }
-
         data = {"body": body, "event": event}
 
         if comments:
             data["comments"] = comments
 
-        try:
-            response = requests.post(url, headers=headers, json=data, timeout=10)
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException:
-            return None
+        return self._request("POST", url, json=data)
 
     def get_pr_files(self, pr_number: int) -> Optional[list]:
         """
@@ -231,24 +273,11 @@ class GitHubIntegration:
         Returns:
             List of file data if successful, None otherwise
         """
-        if not self.token:
-            return None
-
         url = (
             f"{self.base_url}/repos/{self.repo_owner}/{self.repo_name}"
             f"/pulls/{pr_number}/files"
         )
-        headers = {
-            "Authorization": f"token {self.token}",
-            "Accept": "application/vnd.github.v3+json",
-        }
-
-        try:
-            response = requests.get(url, headers=headers, timeout=10)
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException:
-            return None
+        return self._request("GET", url, cache_key=f"pr-files:{pr_number}")
 
     def merge_pull_request(
         self,
@@ -269,31 +298,17 @@ class GitHubIntegration:
         Returns:
             Merge data if successful, None otherwise
         """
-        if not self.token:
-            return None
-
         url = (
             f"{self.base_url}/repos/{self.repo_owner}/{self.repo_name}"
             f"/pulls/{pr_number}/merge"
         )
-        headers = {
-            "Authorization": f"token {self.token}",
-            "Accept": "application/vnd.github.v3+json",
-        }
-
         data = {"merge_method": merge_method}
 
         if commit_title:
             data["commit_title"] = commit_title
         if commit_message:
             data["commit_message"] = commit_message
-
-        try:
-            response = requests.put(url, headers=headers, json=data, timeout=10)
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException:
-            return None
+        return self._request("PUT", url, json=data)
 
     def get_check_runs(self, ref: str) -> Optional[Dict[str, Any]]:
         """
@@ -305,24 +320,11 @@ class GitHubIntegration:
         Returns:
             Check runs data if successful, None otherwise
         """
-        if not self.token:
-            return None
-
         url = (
             f"{self.base_url}/repos/{self.repo_owner}/{self.repo_name}"
             f"/commits/{ref}/check-runs"
         )
-        headers = {
-            "Authorization": f"token {self.token}",
-            "Accept": "application/vnd.github.v3+json",
-        }
-
-        try:
-            response = requests.get(url, headers=headers, timeout=10)
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException:
-            return None
+        return self._request("GET", url, cache_key=f"check-runs:{ref}")
 
     def get_combined_status(self, ref: str) -> Optional[Dict[str, Any]]:
         """
@@ -334,24 +336,11 @@ class GitHubIntegration:
         Returns:
             Combined status data if successful, None otherwise
         """
-        if not self.token:
-            return None
-
         url = (
             f"{self.base_url}/repos/{self.repo_owner}/{self.repo_name}"
             f"/commits/{ref}/status"
         )
-        headers = {
-            "Authorization": f"token {self.token}",
-            "Accept": "application/vnd.github.v3+json",
-        }
-
-        try:
-            response = requests.get(url, headers=headers, timeout=10)
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException:
-            return None
+        return self._request("GET", url, cache_key=f"combined-status:{ref}")
 
 
 class AgentGitHubBridge:

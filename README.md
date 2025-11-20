@@ -45,6 +45,28 @@ python -m llm_framework.scripts.auto_review_pr --pr-number 123
 # Auto-merge when ready (add 'auto-merge' label to PR)
 ```
 
+## Unified CLI (Typer)
+
+Install the package locally and use the consolidated `llm-cli` entry point for configuration-driven automation with retries, caching, batch support, progress bars, dry-run mode, and optional webhook listening.
+
+```bash
+pip install .
+
+llm-cli create-pr --title "Upgrade dependencies" --head feature/deps --base main --verbose
+
+# Batch PR creation from YAML
+llm-cli batch-create-pr --config pr-plan.yml
+
+# Validate merge readiness
+llm-cli check-status 42 --verbose
+
+# Review merge payload without executing
+llm-cli merge-pr 42 --method squash --dry-run
+
+# Event-driven workflows
+llm-cli webhook --port 9000
+```
+
 ## Installation
 
 1. Clone the repository:
