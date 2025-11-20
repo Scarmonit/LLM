@@ -14,7 +14,7 @@ on:
       - 'GITHUB_SECRETS.md'
       - 'WORKFLOW_OPTIMIZATION.md'
 jobs:
-  build:
+    build:
     runs-on: ubuntu-latest
     strategy:
         fail-fast: false  # Allow all Python versions to complete
