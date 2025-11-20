@@ -51,3 +51,18 @@ Thumbs.db
 # Environment variables
 .env
 .env.local
+
+# Node.js / JavaScript
+node_modules/
+npm-debug.log*
+logs/
+*.log
+coverage/
+.nyc_output/
+dist/
+build/
+.claude-sessions/
+tmp/
+temp/
+*.tmp
+.mcp-auth/
