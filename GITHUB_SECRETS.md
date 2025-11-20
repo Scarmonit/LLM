@@ -84,22 +84,35 @@ Navigate to: **Settings** > **Secrets and variables** > **Actions** > **Variable
 
 ## Current Status
 
-✅ Configured:
+✅ 
+
+✅ **Configured:**
 - DOCKER_PASSWORD
 - DOCKER_USERNAME
-- - ANTHROPIC_API_KEY
-  - - OLLAMA_BASE_URL
-    - - CLAUDE_API_KEY
-      - - CLAUDE_WEBHOOK_URL (variable)
-        - - GEMINI_WEBHOOK_URL (variable)
 
-❌ Missing (Need to be added):
-- ANTHROPIC_API_KEY
-- OLLAMA_BASE_URL
-- CLAUDE_API_KEY
-- GITHUB_TOKEN (if advanced features needed)
-- CLAUDE_WEBHOOK_URL (variable)
-- GEMINI_WEBHOOK_URL (variable)
+⚠️ **Needs Configuration:**
+
+These secrets must be added in GitHub Settings > Secrets and variables > Actions:
+
+1. **ANTHROPIC_API_KEY** - For AI code reviews (auto-review.yml)
+   - Get from: https://console.anthropic.com/settings/keys
+   - Use key: `GitHub_Actions_LLM_Workflows` (created Nov 20, 2025)
+
+2. **OLLAMA_BASE_URL** - For Ollama LLM operations (auto-review.yml)
+   - Set your Ollama server URL
+   - Example: `http://localhost:11434` or `https://your-ollama-server.com`
+
+3. **CLAUDE_API_KEY** - For Claude webhook integration (ai-review.yml)
+   - Get from: https://console.anthropic.com/settings/keys
+   - Can use same key as ANTHROPIC_API_KEY
+
+4. **CLAUDE_WEBHOOK_URL** - Repository variable for external webhook (optional)
+   - Set in: Settings > Secrets and variables > Actions > Variables tab
+   - Only needed if using external Claude webhook service
+
+5. **GEMINI_WEBHOOK_URL** - Repository variable for external webhook (optional)
+   - Set in: Settings > Secrets and variables > Actions > Variables tab
+   - Only needed if using external Gemini webhook service
 
 ## Workflow Files Reference
 
@@ -107,7 +120,5 @@ Navigate to: **Settings** > **Secrets and variables** > **Actions** > **Variable
 - `.github/workflows/ai-review.yml` - AI code review system
 - `.github/workflows/auto-merge.yml` - Automated PR merging
 
----
-
-**Last Updated**: November 20, 2025
+**Last Updated**: November 20, 2025  
 **Repository**: Scarmonit/LLM
