@@ -16,6 +16,7 @@ Autonomous AI orchestration system with support for multiple LLM providers inclu
 - **GitHub Integration**: 
   - Agents can send prompts and results to GitHub Copilot via issues/comments
   - ✨ NEW - **PR Automation**: Auto-review, validate, create, and merge pull requests
+  - ✨ NEW - **GitHub CLI Fallback**: Works with `gh` CLI when API token unavailable
 - **Extensible Architecture**: Easy to add custom providers and agents
 - **Provider Abstraction**: Unified interface across different LLM backends
 
@@ -27,15 +28,20 @@ Automate your pull request workflow with AI-powered code review:
 - **Validation**: Check if PRs are ready to merge (checks, approvals, conflicts)
 - **Auto-Merge**: Merge PRs automatically when all conditions are met
 - **PR Creation**: Create pull requests programmatically
+- **GitHub CLI Support**: Use `gh` CLI as fallback when API token isn't available
 
 See [PR Automation Documentation](docs/PR_AUTOMATION.md) for detailed guide.
 
 ### Quick Start with PR Automation
 
 ```bash
-# Set environment variables
+# Option 1: Using GitHub API (with token)
 export GITHUB_TOKEN=your_token
 export ANTHROPIC_API_KEY=your_key  # or use Ollama
+
+# Option 2: Using GitHub CLI (no token needed)
+# Install and authenticate gh CLI first:
+# gh auth login
 
 # Create a PR
 python -m llm_framework.scripts.create_pr \
@@ -46,6 +52,31 @@ python -m llm_framework.scripts.auto_review_pr --pr-number 123
 
 # Auto-merge when ready (add 'auto-merge' label to PR)
 ```
+
+### GitHub CLI Setup (Optional)
+
+The framework can use GitHub CLI (`gh`) as a fallback for GitHub operations:
+
+```bash
+# Install GitHub CLI (if not already installed)
+# On macOS
+brew install gh
+
+# On Ubuntu/Debian
+sudo apt install gh
+
+# On other systems, see: https://cli.github.com/
+
+# Authenticate
+gh auth login
+
+# Verify authentication
+gh auth status
+```
+
+When `gh` CLI is authenticated, the framework will automatically use it as a fallback
+when the `GITHUB_TOKEN` environment variable is not set. You can also explicitly prefer
+CLI over API by passing `prefer_cli=True` to `GitHubIntegration`.
 
 ## Installation
 

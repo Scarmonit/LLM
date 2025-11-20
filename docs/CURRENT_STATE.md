@@ -2,19 +2,20 @@
 
 > **Purpose:** Quick reference for current system status. Update this when making changes.
 
-**Last Updated:** 2025-11-16 03:13 UTC  
-**Last Updated By:** Copilot (GitHub Copilot best practices templates)
+**Last Updated:** 2025-11-20 08:10 UTC  
+**Last Updated By:** Copilot (GitHub CLI fallback support)
 
 ## System Status: ✅ OPERATIONAL
 
 ### Quick Status
 - **Provider:** Ollama (qwen2.5:0.5b) ✅ Installed and working
 - **Agents:** 4 available (research, coding, writing, code_review) ✅
-- **Tests:** 52/52 passing ✅ (was 30/30)
-- **Code Quality:** Pylint 9.29/10 ✅
+- **Tests:** 47/47 passing ✅ (added 17 new tests for GitHub CLI)
+- **Code Quality:** Pylint 9.85/10 ✅ (improved from 9.78/10)
 - **Security:** 0 vulnerabilities ✅
 - **Production Runner:** `run_real_agents.py` ✅
 - **PR Automation:** ✅ Auto-review, validate, create, merge
+- **GitHub CLI Fallback:** ✅ NEW - Works without GITHUB_TOKEN
 - **🤖 Copilot Enhancement:** ✅ Custom instructions, agent, MCP servers, and templates
 
 ## Current Components
@@ -54,13 +55,19 @@ All agents:
 - **Agent/AgentConfig** - Core agent classes ✅
 - **AgentOrchestrator** - Provider and agent management ✅
 - **ContinuousAgent** - Background execution ✅
-- **GitHubIntegration** - ✨ Enhanced with PR automation ✅
+- **GitHubIntegration** - ✨ Enhanced with PR automation and GitHub CLI fallback ✅
 
 #### GitHub PR Automation ✨ NEW
 - **PRReviewer** - Automated code review ✅
   - Review PRs using LLM agent
   - Validate PR status and checks
   - Auto-merge when ready
+  
+- **GitHub CLI Fallback** ✨ NEW ✅
+  - Detects and uses `gh` CLI when available
+  - Fallback for API operations when token unavailable
+  - Supports: create PR, view PR, merge PR, list PRs
+  - Configurable preference (API or CLI)
   
 - **CLI Tools** ✅
   - `create_pr.py` - Create pull requests
@@ -149,9 +156,33 @@ All agents:
 - OpenAI: `export OPENAI_API_KEY=your_key`
 
 #### For GitHub Integration
-- `export GITHUB_TOKEN=your_token`
-- `export GITHUB_REPO_OWNER=Scarmonit`
-- `export GITHUB_REPO_NAME=LLM`
+
+**Option 1: GitHub API (Recommended for CI/CD)**
+```bash
+export GITHUB_TOKEN=your_token
+export GITHUB_REPO_OWNER=Scarmonit
+export GITHUB_REPO_NAME=LLM
+```
+
+**Option 2: GitHub CLI (Recommended for Local Development)**
+```bash
+# Install GitHub CLI
+# On macOS: brew install gh
+# On Ubuntu/Debian: sudo apt install gh
+# On other systems: https://cli.github.com/
+
+# Authenticate
+gh auth login
+
+# Verify authentication
+gh auth status
+
+# No environment variables needed - gh CLI uses its own authentication
+```
+
+**Note:** The framework will automatically use `gh` CLI as a fallback when `GITHUB_TOKEN` 
+is not set. You can also explicitly prefer CLI over API by passing `prefer_cli=True` 
+when creating a `GitHubIntegration` instance.
 
 ## How to Verify Current State
 
