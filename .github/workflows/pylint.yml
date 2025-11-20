@@ -10,8 +10,7 @@ on:
       - '.github/workflows/pylint.yml'
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  build:    runs-on: ubuntu-latest
     strategy:
       fail-fast: false  # Allow all Python versions to complete
       matrix:
