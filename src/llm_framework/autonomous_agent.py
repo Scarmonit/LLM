@@ -134,6 +134,10 @@ class TestMonitorAgent(AutonomousAgent):
     Monitors and runs tests, reports failures autonomously.
     """
 
+    # Prevent pytest from treating this class as a test case while still allowing
+    # it to be imported and used in orchestrator flows.
+    __test__ = False
+
     def __init__(self, agent, repo_path: str):
         super().__init__("test_monitor", agent, repo_path)
         self.last_test_run = 0

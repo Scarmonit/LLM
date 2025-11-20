@@ -98,6 +98,15 @@ def test_autonomous_agent_can_be_subclassed():
     assert issue_agent.name == "issue_monitor"
 
 
+def test_test_monitor_agent_not_collected_by_pytest():
+    """Ensure pytest will not collect the monitor agent as a test class."""
+
+    # The class name starts with "Test", so explicitly mark it as non-test
+    # to avoid unwanted pytest collection while keeping it importable in
+    # orchestrator flows.
+    assert getattr(TestMonitorAgent, "__test__", True) is False
+
+
 def test_subclass_find_work_override():
     """Test that subclasses can override find_work without warnings."""
     mock_agent = MockAgent()
