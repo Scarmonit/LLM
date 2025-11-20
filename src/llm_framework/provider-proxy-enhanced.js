@@ -146,7 +146,8 @@ class ProviderMetrics {
         ? successful.reduce((sum, m) => sum + m.duration, 0) / successful.length
         : 0,
       lastRequest: Math.max(...metrics.map(m => m.timestamp)),
-      recentFailures: failed.slice(-5).map(m => m.error)
+      recentFailures: failed.slice(-5).map(m => m.error),
+      recentResponseTimes: successful.slice(-10).map(m => m.duration)
     };
   }
 
@@ -355,7 +356,7 @@ class ProviderProxy extends EventEmitter {
       avgResponseTime: stats ? stats.avgResponseTime : 0,
       totalRequests: stats ? stats.totalRequests : 0,
       lastCheck: health ? health.timestamp : Date.now(),
-      recentResponseTimes: stats ? [] : [] // Simplified for now as we don't store recent times in metrics yet
+      recentResponseTimes: stats ? stats.recentResponseTimes : []
     }, { provider: providerName });
     return scoreResult.score;
   }
@@ -371,25 +372,35 @@ class ProviderProxy extends EventEmitter {
     logger.info('Starting health monitoring');
 
     this.healthCheckInterval = setInterval(async () => {
+      const checkPromises = [];
+      
+      // Limit concurrency: split providers into chunks or just use Promise.all if list is small
+      // For enterprise scale (dozens of providers), we might want a concurrency limit.
+      // Assuming manageable list for now, we run checks in parallel.
+      
       for (const [name, provider] of this.providers) {
-        try {
-          const startTime = performance.now();
-
-          // Call health check if available, otherwise skip
-          if (provider.healthCheck) {
-            await provider.healthCheck();
-          }
-
-          const responseTime = performance.now() - startTime;
-
-          this.metrics.recordHealthCheck(name, true, responseTime);
-          logger.debug(`Health check passed for ${name} in ${responseTime.toFixed(2)}ms`);
-
-        } catch (error) {
-          this.metrics.recordHealthCheck(name, false, null);
-          logger.warn(`Health check failed for ${name}: ${error.message}`);
-        }
+        checkPromises.push(
+          (async () => {
+            try {
+              const startTime = performance.now();
+              
+              if (provider.healthCheck) {
+                await provider.healthCheck();
+              }
+              
+              const responseTime = performance.now() - startTime;
+              this.metrics.recordHealthCheck(name, true, responseTime);
+              // logger.debug(`Health check passed for ${name} in ${responseTime.toFixed(2)}ms`); // Too noisy
+            } catch (error) {
+              this.metrics.recordHealthCheck(name, false, null);
+              logger.warn(`Health check failed for ${name}: ${error.message}`);
+            }
+          })()
+        );
       }
+      
+      await Promise.all(checkPromises);
+      
     }, this.config.HEALTH_CHECK_INTERVAL);
   }
 
@@ -438,6 +449,27 @@ class ProviderProxy extends EventEmitter {
     }
 
     return report;
+  }
+
+  getMetricsSnapshot() {
+    const snapshot = {
+      timestamp: Date.now(),
+      providers: {}
+    };
+
+    for (const [name, breaker] of this.circuitBreakers) {
+      const stats = this.metrics.getProviderStats(name);
+      const state = breaker.getState();
+      
+      snapshot.providers[name] = {
+        circuit_state: state.state === 'OPEN' ? 0 : 1, // 1=Healthy(Closed/Half), 0=Unhealthy(Open)
+        failures: state.failures,
+        success_rate: stats ? stats.successRate : 1,
+        avg_latency: stats ? stats.avgResponseTime : 0,
+        total_requests: stats ? stats.totalRequests : 0
+      };
+    }
+    return snapshot;
   }
 
   /**
