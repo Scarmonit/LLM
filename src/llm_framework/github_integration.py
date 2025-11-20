@@ -1,6 +1,9 @@
 """GitHub integration for agents to communicate with Copilot."""
 
 import os
+import json
+import shutil
+import subprocess
 from typing import Optional, Dict, Any
 import requests
 
@@ -8,7 +11,13 @@ import requests
 class GitHubIntegration:
     """Integration with GitHub for agent communication."""
 
-    def __init__(self, repo_owner: str, repo_name: str, token: Optional[str] = None):
+    def __init__(
+        self,
+        repo_owner: str,
+        repo_name: str,
+        token: Optional[str] = None,
+        prefer_cli: bool = False,
+    ):
         """
         Initialize GitHub integration.
 
@@ -16,11 +25,61 @@ class GitHubIntegration:
             repo_owner: Repository owner username
             repo_name: Repository name
             token: GitHub personal access token (or use GITHUB_TOKEN env var)
+            prefer_cli: If True, prefer gh CLI over API when both are available
         """
         self.repo_owner = repo_owner
         self.repo_name = repo_name
         self.token = token or os.getenv("GITHUB_TOKEN")
         self.base_url = "https://api.github.com"
+        self.prefer_cli = prefer_cli
+
+    def _is_gh_available(self) -> bool:
+        """
+        Check if gh CLI is installed and authenticated.
+
+        Returns:
+            True if gh CLI is available and authenticated, False otherwise
+        """
+        if shutil.which("gh") is None:
+            return False
+
+        try:
+            # Check if authenticated
+            result = subprocess.run(
+                ["gh", "auth", "status"],
+                capture_output=True,
+                text=True,
+                timeout=5,
+                check=False,
+            )
+            return result.returncode == 0
+        except (subprocess.TimeoutExpired, subprocess.SubprocessError):
+            return False
+
+    def _execute_gh_command(self, args: list, timeout: int = 30) -> Optional[Dict[str, Any]]:
+        """
+        Execute gh CLI command and return parsed JSON.
+
+        Args:
+            args: Command arguments to pass to gh CLI
+            timeout: Command timeout in seconds
+
+        Returns:
+            Parsed JSON response or None on failure
+        """
+        try:
+            result = subprocess.run(
+                ["gh"] + args,
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+                check=True,
+            )
+            if result.stdout:
+                return json.loads(result.stdout)
+            return {}
+        except (subprocess.TimeoutExpired, subprocess.SubprocessError, json.JSONDecodeError):
+            return None
 
     def create_issue(
         self, title: str, body: str, labels: Optional[list] = None
@@ -134,6 +193,31 @@ class GitHubIntegration:
         Returns:
             PR data if successful, None otherwise
         """
+        # Try gh CLI if preferred or if no token
+        if (self.prefer_cli or not self.token) and self._is_gh_available():
+            args = [
+                "pr",
+                "create",
+                "--repo",
+                f"{self.repo_owner}/{self.repo_name}",
+                "--title",
+                title,
+                "--body",
+                body,
+                "--head",
+                head,
+                "--base",
+                base,
+                "--json",
+                "number,url,state",
+            ]
+            if draft:
+                args.append("--draft")
+            result = self._execute_gh_command(args)
+            if result:
+                return result
+
+        # Fallback to API if token available
         if not self.token:
             return None
 
@@ -162,6 +246,22 @@ class GitHubIntegration:
         Returns:
             PR data if successful, None otherwise
         """
+        # Try gh CLI if preferred or if no token
+        if (self.prefer_cli or not self.token) and self._is_gh_available():
+            args = [
+                "pr",
+                "view",
+                str(pr_number),
+                "--repo",
+                f"{self.repo_owner}/{self.repo_name}",
+                "--json",
+                "number,title,body,state,url,headRefName,baseRefName,isDraft,mergeable",
+            ]
+            result = self._execute_gh_command(args)
+            if result:
+                return result
+
+        # Fallback to API if token available
         if not self.token:
             return None
 
@@ -269,6 +369,31 @@ class GitHubIntegration:
         Returns:
             Merge data if successful, None otherwise
         """
+        # Try gh CLI if preferred or if no token
+        if (self.prefer_cli or not self.token) and self._is_gh_available():
+            args = [
+                "pr",
+                "merge",
+                str(pr_number),
+                "--repo",
+                f"{self.repo_owner}/{self.repo_name}",
+            ]
+            # Map merge methods
+            if merge_method == "squash":
+                args.append("--squash")
+            elif merge_method == "rebase":
+                args.append("--rebase")
+            else:
+                args.append("--merge")
+
+            # gh CLI doesn't support custom commit messages directly
+            # Just merge with the method
+            args.extend(["--auto"])
+            result = self._execute_gh_command(args)
+            if result:
+                return result
+
+        # Fallback to API if token available
         if not self.token:
             return None
 
@@ -290,6 +415,55 @@ class GitHubIntegration:
 
         try:
             response = requests.put(url, headers=headers, json=data, timeout=10)
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException:
+            return None
+
+    def list_pull_requests(
+        self, state: str = "open", limit: int = 30
+    ) -> Optional[list]:
+        """
+        List pull requests in the repository.
+
+        Args:
+            state: PR state filter (open, closed, all)
+            limit: Maximum number of PRs to return
+
+        Returns:
+            List of PR data if successful, None otherwise
+        """
+        # Try gh CLI if preferred or if no token
+        if (self.prefer_cli or not self.token) and self._is_gh_available():
+            args = [
+                "pr",
+                "list",
+                "--repo",
+                f"{self.repo_owner}/{self.repo_name}",
+                "--state",
+                state,
+                "--limit",
+                str(limit),
+                "--json",
+                "number,title,state,url,headRefName,baseRefName,isDraft",
+            ]
+            result = self._execute_gh_command(args)
+            if result:
+                return result
+
+        # Fallback to API if token available
+        if not self.token:
+            return None
+
+        url = f"{self.base_url}/repos/{self.repo_owner}/{self.repo_name}/pulls"
+        headers = {
+            "Authorization": f"token {self.token}",
+            "Accept": "application/vnd.github.v3+json",
+        }
+        params = {"state": state, "per_page": limit}
+
+        try:
+            response = requests.get(url, headers=headers, params=params, timeout=10)
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException:
