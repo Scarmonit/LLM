@@ -1,9 +1,23 @@
 name: Pylint
-on: [push]
+on:
+  push:
+    branches: [ main, Scarmonit ]
+    paths:
+      - 'src/**'
+      - 'llm_framework/**'
+      - 'tests/**'
+      - 'requirements.txt'
+      - '.github/workflows/pylint.yml'
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'GITHUB_SECRETS.md'
+      - 'WORKFLOW_OPTIMIZATION.md'
 jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
+        fail-fast: false  # Allow all Python versions to complete
       matrix:
         python-version: ["3.8", "3.9", "3.10"]
     steps:
