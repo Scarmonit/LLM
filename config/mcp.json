@@ -1,0 +1,18 @@
+﻿{
+  "mcpServers": {
+    "kali-mcp": {
+      "command": "node",
+      "args": ["src/mcp/kali-mcp-server.js"],
+      "env": {}
+    },
+    "blackbox": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/client"],
+      "env": {
+        "MCP_SERVER_URL": "https://cloud.blackbox.ai/api/mcp",
+        "MCP_HEADERS": "{\"Authorization\":\"Bearer bb_057ce371423ec09e8638586bc4c14bd8fdca3805521a297dce450ae563d8c6fd\"}"
+      }
+    }
+  }
+}
+
