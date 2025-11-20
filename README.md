@@ -2,6 +2,8 @@
 
 Autonomous AI orchestration system with support for multiple LLM providers including Claude and Ollama, featuring continuous agent execution, GitHub Copilot integration, and automated PR management.
 
+> **New to the project?** Start with the [Quick Start Guide](docs/QUICKSTART.md) to get up and running in under 20 minutes! 🚀
+
 ## Features
 
 - **Multi-Provider Support**: Seamlessly switch between different LLM providers (Claude, Ollama)
@@ -46,6 +48,8 @@ python -m llm_framework.scripts.auto_review_pr --pr-number 123
 ```
 
 ## Installation
+
+> 📖 **For detailed setup instructions, see the [Quick Start Guide](docs/QUICKSTART.md)**
 
 1. Clone the repository:
 ```bash
