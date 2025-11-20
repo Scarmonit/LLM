@@ -6,8 +6,12 @@ import os
 import time
 import subprocess
 import json
+import logging
 from datetime import datetime
 from typing import Dict, Any, Optional
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 
 class AutonomousAgent:
@@ -24,10 +28,20 @@ class AutonomousAgent:
 
     def find_work(self) -> Optional[Dict[str, Any]]:
         """
-        Find work to do autonomously. Override in subclasses.
-        Returns dict with 'task' and 'context' or None.
+        Find work to do autonomously. Can be overridden in subclasses.
+        
+        Default implementation returns None (no work found).
+        Subclasses should override this method to provide specific work-finding logic.
+        
+        Returns:
+            dict with 'task' and 'context' keys, or None if no work is found.
         """
-        raise NotImplementedError
+        logger.warning(
+            "Using default find_work() implementation for %s. "
+            "Consider overriding this method in subclass for autonomous behavior.",
+            self.name
+        )
+        return None
 
     def execute_work(self, work: Dict[str, Any]) -> str:
         """Execute the work and return result."""
