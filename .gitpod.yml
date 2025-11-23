@@ -1,0 +1,92 @@
+# Ona/Gitpod Configuration for LLM Project
+# https://www.gitpod.io/docs/references/gitpod-yml
+
+image:
+  file: .devcontainer/Dockerfile
+
+tasks:
+  - name: Setup Environment
+    init: |
+      npm ci
+      echo "✅ Dependencies installed"
+    command: |
+      echo "🚀 LLM Environment Ready!"
+      echo "📦 Node: $(node --version)"
+      echo "🐍 Python: $(python --version)"
+      echo ""
+      echo "Available commands:"
+      echo "  npm start     - Start the application"
+      echo "  npm test      - Run tests"
+      echo ""
+
+  - name: Ollama (Optional)
+    command: |
+      if command -v ollama &> /dev/null; then
+        echo "🦙 Starting Ollama..."
+        ollama serve
+      else
+        echo "ℹ️  Ollama not installed. Run: curl -fsSL https://ollama.com/install.sh | sh"
+      fi
+
+ports:
+  - port: 3000
+    onOpen: notify
+    name: Dev Server
+  - port: 5000
+    onOpen: notify
+    name: Flask API
+  - port: 8000
+    onOpen: notify
+    name: FastAPI
+  - port: 8080
+    onOpen: notify
+    name: Proxy
+  - port: 8888
+    onOpen: notify
+    name: Jupyter
+  - port: 11434
+    onOpen: ignore
+    name: Ollama
+
+jetbrains:
+  intellij:
+    plugins:
+      - PythonCore
+      - JavaScript
+      - org.jetbrains.plugins.yaml
+      - Docker
+      - com.intellij.kubernetes
+    prebuilds:
+      version: stable
+  pycharm:
+    plugins:
+      - com.intellij.database
+      - com.jetbrains.restClient
+      - com.intellij.jupyter
+    prebuilds:
+      version: stable
+  webstorm:
+    plugins:
+      - JavaScript
+      - org.jetbrains.plugins.yaml
+    prebuilds:
+      version: stable
+
+vscode:
+  extensions:
+    - dbaeumer.vscode-eslint
+    - esbenp.prettier-vscode
+    - ms-python.python
+    - GitHub.copilot
+    - ms-azuretools.vscode-docker
+    - ms-kubernetes-tools.vscode-kubernetes-tools
+
+github:
+  prebuilds:
+    master: true
+    branches: true
+    pullRequests: true
+    pullRequestsFromForks: false
+    addCheck: true
+    addComment: false
+    addBadge: true

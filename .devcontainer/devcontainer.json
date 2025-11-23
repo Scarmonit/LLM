@@ -1,0 +1,91 @@
+{
+  "$schema": "https://raw.githubusercontent.com/devcontainers/spec/main/schemas/devContainer.schema.json",
+  "name": "LLM - Ona JetBrains Environment",
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
+
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "20"
+    },
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.12"
+    },
+    "ghcr.io/devcontainers/features/terraform:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {}
+  },
+
+  "customizations": {
+    "jetbrains": {
+      "plugins": [
+        "PythonCore",
+        "JavaScript",
+        "org.jetbrains.plugins.yaml",
+        "com.intellij.database",
+        "org.intellij.plugins.markdown",
+        "com.jetbrains.restClient",
+        "Docker",
+        "com.intellij.kubernetes",
+        "org.intellij.plugins.hcl",
+        "org.toml.lang",
+        "com.intellij.plugins.vscodekeymap",
+        "com.intellij.java",
+        "org.jetbrains.kotlin",
+        "com.intellij.jupyter"
+      ],
+      "backend": {
+        "memory": 8192
+      }
+    },
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "ms-vscode.vscode-typescript-next",
+        "eamodio.gitlens",
+        "GitHub.copilot",
+        "ms-azuretools.vscode-docker",
+        "ms-python.python",
+        "ms-kubernetes-tools.vscode-kubernetes-tools",
+        "hashicorp.terraform"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.fixAll.eslint": "explicit"
+        }
+      }
+    }
+  },
+
+  "postCreateCommand": "npm ci && echo '✅ LLM environment ready!'",
+  "postStartCommand": "echo '🚀 Connect via JetBrains Gateway or VS Code'",
+
+  "forwardPorts": [3000, 5000, 8000, 8080, 8888, 11434],
+
+  "portsAttributes": {
+    "3000": {"label": "Dev Server", "onAutoForward": "notify"},
+    "5000": {"label": "Flask/API", "onAutoForward": "notify"},
+    "8000": {"label": "FastAPI", "onAutoForward": "notify"},
+    "8080": {"label": "Proxy", "onAutoForward": "notify"},
+    "8888": {"label": "Jupyter", "onAutoForward": "notify"},
+    "11434": {"label": "Ollama", "onAutoForward": "silent"}
+  },
+
+  "containerEnv": {
+    "PYTHONPATH": "${containerWorkspaceFolder}",
+    "EDITOR": "vim",
+    "SHELL": "/bin/bash"
+  },
+
+  "hostRequirements": {
+    "cpus": 4,
+    "memory": "8gb",
+    "storage": "64gb"
+  },
+
+  "remoteUser": "vscode"
+}
