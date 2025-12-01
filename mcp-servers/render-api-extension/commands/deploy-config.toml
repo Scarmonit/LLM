@@ -1,0 +1,14 @@
+description = "Push environment variables and update service configuration, then deploy"
+prompt = """
+Help me configure and deploy a Render service. I want to:
+1. Set environment variables (especially for credentials like GOOGLE_APPLICATION_CREDENTIALS_JSON)
+2. Update service configuration (like healthCheckPath)
+3. Deploy the changes immediately
+
+First, ask me for:
+- The service ID (or list services with render_list_services if I don't know it)
+- Which environment variables to set
+- Any configuration changes (healthCheckPath, startCommand, etc.)
+
+Then use render_configure_and_deploy to make all changes and deploy in one action.
+"""

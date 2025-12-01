@@ -1,0 +1,15 @@
+description = "Push Google Application Credentials JSON and configure health check path"
+prompt = """
+I need to push GOOGLE_APPLICATION_CREDENTIALS_JSON to a Render service and update the healthCheckPath.
+
+Steps:
+1. First list my services with render_list_services so I can pick one
+2. Ask me for the Google credentials JSON content
+3. Ask me for the health check path (default: /health)
+4. Use render_configure_and_deploy to:
+   - Set GOOGLE_APPLICATION_CREDENTIALS_JSON environment variable
+   - Update healthCheckPath
+   - Trigger deployment
+
+This will apply all changes instantly without manual dashboard intervention.
+"""
