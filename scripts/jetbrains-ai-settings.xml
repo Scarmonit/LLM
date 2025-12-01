@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+  JetBrains AI Assistant Settings Template
+  Location: Copy to %APPDATA%\JetBrains\<IDE><version>\options\
+  Or import via Settings > Tools > AI Assistant
+-->
+<application>
+  <component name="AiAssistantSettings">
+    <!-- Enable AI Assistant -->
+    <option name="enabled" value="true" />
+    
+    <!-- Code Completion Settings -->
+    <option name="enableCloudCodeCompletion" value="true" />
+    <option name="enableLocalCodeCompletion" value="true" />
+    <option name="completionDelay" value="300" />
+    
+    <!-- Next Edit Suggestions -->
+    <option name="enableNextEditSuggestions" value="true" />
+    <option name="chainSuggestions" value="true" />
+    <option name="supportedLanguages">
+      <list>
+        <option value="Java" />
+        <option value="Kotlin" />
+        <option value="Python" />
+        <option value="JavaScript" />
+        <option value="TypeScript" />
+        <option value="Go" />
+        <option value="Rust" />
+      </list>
+    </option>
+    
+    <!-- Chat Settings -->
+    <option name="defaultChatModel" value="auto" />
+    <option name="customResponseLanguage" value="" />
+    <option name="enableCustomLanguage" value="false" />
+    <option name="messageTrimThreshold" value="85" />
+    
+    <!-- VCS Integration -->
+    <option name="generateCommitMessages" value="true" />
+    <option name="useVcsHistoryForCommits" value="true" />
+    <option name="autoGeneratePRDescription" value="true" />
+    
+    <!-- Privacy & Security -->
+    <option name="enableAiIgnore" value="true" />
+    <option name="sendTelemetry" value="false" />
+    
+    <!-- Local Models -->
+    <option name="offlineMode" value="false" />
+    <option name="ollamaEndpoint" value="http://localhost:11434" />
+    <option name="lmStudioEndpoint" value="http://localhost:1234/v1" />
+    <option name="preferredLocalModel" value="qwen2.5-coder:7b" />
+    
+    <!-- MCP Configuration -->
+    <option name="enableMcp" value="true" />
+    <option name="mcpConfigPath" value="$USER_HOME$/.jetbrains-ai-mcp-config.json" />
+  </component>
+  
+  <component name="AiAssistantKeymap">
+    <!-- Custom Keyboard Shortcuts -->
+    <keymap>
+      <action id="AiAssistant.Chat">
+        <keyboard-shortcut first-keystroke="ctrl shift A" />
+      </action>
+      <action id="AiAssistant.ExplainCode">
+        <keyboard-shortcut first-keystroke="ctrl shift E" />
+      </action>
+      <action id="AiAssistant.GenerateDocumentation">
+        <keyboard-shortcut first-keystroke="ctrl shift D" />
+      </action>
+      <action id="AiAssistant.FindProblems">
+        <keyboard-shortcut first-keystroke="ctrl shift P" />
+      </action>
+      <action id="AiAssistant.SuggestRefactoring">
+        <keyboard-shortcut first-keystroke="ctrl shift R" />
+      </action>
+      <action id="AiAssistant.GenerateTests">
+        <keyboard-shortcut first-keystroke="ctrl shift T" />
+      </action>
+    </keymap>
+  </component>
+</application>

@@ -1,0 +1,90 @@
+version: '3.8'
+
+services:
+  mcp-analyzer:
+    build:
+      context: .
+      dockerfile: Dockerfile.mcp-analyzer
+    container_name: mcp-code-analyzer
+    environment:
+      - NODE_ENV=production
+      - NEO4J_URL=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD:-neo4j}
+    volumes:
+      # Mount your code repository
+      - ${REPO_PATH:-./}:/workspace:ro
+      # Output directory for results
+      - ./mcp-output:/output
+    networks:
+      - mcp-network
+    depends_on:
+      neo4j:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  neo4j:
+    image: neo4j:5.15-community
+    container_name: mcp-neo4j
+    environment:
+      - NEO4J_AUTH=neo4j/${NEO4J_PASSWORD:-neo4j}
+      - NEO4J_PLUGINS=["apoc"]
+      - NEO4J_dbms_security_procedures_unrestricted=apoc.*
+    ports:
+      - "7474:7474"  # HTTP
+      - "7687:7687"  # Bolt
+    volumes:
+      - neo4j-data:/data
+      - neo4j-logs:/logs
+    networks:
+      - mcp-network
+    healthcheck:
+      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "${NEO4J_PASSWORD:-neo4j}", "RETURN 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
+
+  sqlite-viewer:
+    image: coleifer/sqlite-web
+    container_name: mcp-sqlite-viewer
+    command: ["/output/mcp-analysis.db"]
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./mcp-output:/output:ro
+    networks:
+      - mcp-network
+    restart: unless-stopped
+    depends_on:
+      - mcp-analyzer
+
+volumes:
+  neo4j-data:
+    driver: local
+  neo4j-logs:
+    driver: local
+
+networks:
+  mcp-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16

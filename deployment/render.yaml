@@ -1,0 +1,67 @@
+# Render Blueprint - Infrastructure as Code
+# Deploy with: render blueprint apply
+# Docs: https://render.com/docs/blueprint-spec
+
+services:
+  # Main Application Service
+  - type: web
+    name: jules-orchestrator
+    runtime: node
+    plan: starter
+    region: oregon
+    branch: main
+
+    # Build & Start
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+
+    # Health Check - CRITICAL for zero-downtime deploys
+    healthCheckPath: /api/v1/health
+
+    # Auto-deploy on push
+    autoDeploy: true
+
+    # Environment Variables
+    envVars:
+      # Application Config
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "10000"
+
+      # Google Cloud Credentials (managed in Dashboard)
+      - key: GOOGLE_APPLICATION_CREDENTIALS_JSON
+        sync: false  # Set this in Render Dashboard for security
+
+      # Optional: Database URL (if using PostgreSQL)
+      # - key: DATABASE_URL
+      #   fromDatabase:
+      #     name: main-db
+      #     property: connectionString
+
+    # Scaling (Pro plan required for multiple instances)
+    # numInstances: 2
+    # scaling:
+    #   minInstances: 1
+    #   maxInstances: 5
+    #   targetMemoryPercent: 80
+    #   targetCPUPercent: 80
+
+# Preview Environments (automatic PR previews)
+previews:
+  generation: automatic
+
+# Optional: PostgreSQL Database
+# databases:
+#   - name: main-db
+#     plan: starter
+#     region: oregon
+#     ipAllowList: []
+
+# Optional: Redis Cache
+# services:
+#   - type: redis
+#     name: cache
+#     plan: starter
+#     region: oregon
+#     maxmemoryPolicy: allkeys-lru

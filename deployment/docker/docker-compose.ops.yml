@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+  # Portainer - Docker & Kubernetes Management UI
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: ops-portainer
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    ports:
+      - "9000:9000"
+      - "9443:9443"
+    networks:
+      - ops-network
+
+  # Dozzle - Real-time Log Viewer
+  dozzle:
+    image: amir20/dozzle:latest
+    container_name: ops-dozzle
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "8888:8080" # Mapped to 8888 to avoid conflict with Web Portal on 8080
+    environment:
+      - DOZZLE_LEVEL=info
+    networks:
+      - ops-network
+
+  # Trivy - Security Scanner (Run on demand)
+  trivy:
+    image: aquasec/trivy:latest
+    container_name: ops-trivy
+    command: image --help
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - trivy_cache:/root/.cache/
+    networks:
+      - ops-network
+
+  # Watchtower - Automatic Container Updates
+  watchtower:
+    image: containrrr/watchtower
+    container_name: ops-watchtower
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_CLEANUP=true # Remove old images after update
+      - WATCHTOWER_POLL_INTERVAL=86400 # Check every 24 hours
+    networks:
+      - ops-network
+
+  # cAdvisor - Container Resource Usage & Performance Metrics
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: ops-cadvisor
+    restart: unless-stopped
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    ports:
+      - "8081:8080" # Mapped to 8081 to avoid conflict
+    privileged: true
+    devices:
+      - /dev/kmsg
+    networks:
+      - ops-network
+
+volumes:
+  portainer_data:
+  trivy_cache:
+
+networks:
+  ops-network:
+    driver: bridge
