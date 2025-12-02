@@ -1,0 +1,189 @@
+[15:04:15] ℹ️  Starting comprehensive audit (category: all)...
+[15:04:15] ℹ️  
+[15:04:15] ℹ️  Running code quality audits...
+[15:04:22] ℹ️  Running security audits...
+[15:04:23] ℹ️  Running performance audits...
+[15:04:27] ℹ️  Running integration audits...
+[15:04:31] ℹ️  Running robustness audits...
+[15:04:37] ℹ️  Running documentation audits...
+
+================================================================================
+COMPREHENSIVE AUDIT REPORT
+================================================================================
+
+SUMMARY
+--------------------------------------------------------------------------------
+Categories: 4/6 passed
+Total execution time: 21.22s
+
+✅ PASS QUALITY
+     4/6 checks passed
+     Execution time: 7.08s
+
+❌ FAIL SECURITY
+     5/6 checks passed
+     Execution time: 0.11s
+
+✅ PASS PERFORMANCE
+     4/4 checks passed
+     Execution time: 4.56s
+
+✅ PASS INTEGRATION
+     4/4 checks passed
+     Execution time: 3.86s
+
+❌ FAIL ROBUSTNESS
+     2/4 checks passed
+     Execution time: 5.61s
+
+✅ PASS DOCS
+     4/4 checks passed
+     Execution time: 0.00s
+
+
+DETAILED RESULTS
+================================================================================
+
+QUALITY AUDITS
+--------------------------------------------------------------------------------
+✅ [INFO] Pylint Code Quality
+   Pylint score: 9.50/10 (threshold: 9.0)
+   Execution time: 5.992s
+
+❌ [MEDIUM] Black Formatting
+   Black formatting check failed
+   Execution time: 0.531s
+
+✅ [INFO] Import Organization
+   Import organization check (0 issues)
+   Execution time: 0.001s
+
+✅ [INFO] Code Complexity
+   Code complexity check (radon not available, skipped)
+   Execution time: 0.454s
+
+❌ [LOW] Docstring Coverage
+   Docstring coverage (11 missing)
+   Execution time: 0.002s
+
+✅ [INFO] Type Hints Coverage
+   Type hints check (mypy not available, skipped)
+   Execution time: 0.098s
+
+
+SECURITY AUDITS
+--------------------------------------------------------------------------------
+✅ [INFO] Hardcoded Secrets
+   Hardcoded secrets check (0 found)
+   Execution time: 0.004s
+
+❌ [HIGH] Unsafe Code Patterns
+   Unsafe patterns check (1 found)
+   Execution time: 0.001s
+
+✅ [INFO] Dependency Vulnerabilities
+   Dependency check (safety/pip-audit not available, skipped)
+   Execution time: 0.101s
+
+✅ [INFO] SQL Injection Vulnerabilities
+   SQL injection check (0 potential issues)
+   Execution time: 0.003s
+
+✅ [INFO] Command Injection Vulnerabilities
+   Command injection check (0 potential issues)
+   Execution time: 0.001s
+
+✅ [INFO] Path Traversal Vulnerabilities
+   Path traversal check (0 potential issues)
+   Execution time: 0.002s
+
+
+PERFORMANCE AUDITS
+--------------------------------------------------------------------------------
+✅ [INFO] Test Suite Performance
+   Test suite performance: 3.48s (threshold: 30s)
+   Execution time: 3.484s
+
+✅ [INFO] Module Import Time
+   Import time: 0.098s (threshold: 1.0s)
+   Execution time: 0.128s
+
+✅ [INFO] Baseline Memory Usage
+   Baseline memory: 11.65MB (threshold: 100MB)
+   Execution time: 0.831s
+
+✅ [INFO] Provider Performance
+   Provider response time: 0.000s (mock provider)
+   Execution time: 0.113s
+
+
+INTEGRATION AUDITS
+--------------------------------------------------------------------------------
+✅ [INFO] Provider Initialization
+   Provider initialization passed
+   Execution time: 0.127s
+
+✅ [INFO] Agent Creation
+   Agent creation passed
+   Execution time: 0.127s
+
+✅ [INFO] Full Test Suite
+   Test suite: 0 passed, 0 failed
+   Execution time: 3.486s
+
+✅ [INFO] Configuration Loading
+   Configuration loading passed
+   Execution time: 0.124s
+
+
+ROBUSTNESS AUDITS
+--------------------------------------------------------------------------------
+❌ [HIGH] Error Handling
+   Error handling (1 issues)
+   Execution time: 0.195s
+
+❌ [MEDIUM] Edge Case Handling
+   Edge case handling (2 issues)
+   Execution time: 0.197s
+
+✅ [INFO] Invalid Input Handling
+   Invalid input handling (permissive by design)
+   Execution time: 0.098s
+
+✅ [INFO] Resource Cleanup
+   Resource cleanup passed
+   Execution time: 5.115s
+
+
+DOCS AUDITS
+--------------------------------------------------------------------------------
+✅ [INFO] README Quality
+   README quality (0 issues)
+   Execution time: 0.001s
+
+✅ [INFO] API Documentation
+   API documentation (0 issues)
+   Execution time: 0.000s
+
+✅ [INFO] Code Examples
+   Code examples (4 found)
+   Execution time: 0.000s
+
+✅ [INFO] Documentation Accuracy
+   Documentation accuracy (0 issues)
+   Execution time: 0.000s
+
+
+CRITICAL & HIGH SEVERITY ISSUES
+================================================================================
+🔥 [HIGH] Unsafe Code Patterns
+   Unsafe patterns check (1 found)
+
+🔥 [HIGH] Error Handling
+   Error handling (1 issues)
+
+================================================================================
+❌ SOME AUDITS FAILED
+   2 categories failed
+   2 critical/high severity issues
+================================================================================
